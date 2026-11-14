@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><title>젓가락 탐험대 · AI 진단 v0.1.3</title>
+<style>
+:root{font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif;color:#17342f;background:#eef5ef}*{box-sizing:border-box}body{margin:0}.app{max-width:800px;margin:auto;padding:15px 14px 35px}header{display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:24px;margin:10px 0 4px}.sub{font-size:13px;color:#647a73;margin:0 0 14px}.score{background:#fff3c9;border-radius:16px;padding:10px 13px;font-weight:800;white-space:nowrap}.panel{background:white;border-radius:19px;padding:14px;margin-top:13px;box-shadow:0 5px 18px #18513b12}.stage{position:relative;width:100%;aspect-ratio:4/3;background:#183b34;border-radius:13px;overflow:hidden}.stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}.stage canvas{pointer-events:none}.stage video{background:linear-gradient(125deg,#456c59,#15362d)}.placeholder{position:absolute;inset:0;display:grid;place-content:center;text-align:center;color:#e5fff1;padding:24px;line-height:1.6;font-size:15px}.stage.ready .placeholder{display:none}.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}button{border:0;border-radius:12px;background:#177f61;color:white;font-size:15px;font-weight:750;padding:12px 14px;cursor:pointer}button.secondary{background:#e7f1eb;color:#245544}button:disabled{opacity:.5}.info{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stat{background:#f3f7f4;padding:12px;border-radius:13px}.stat b{font-size:13px;display:block;margin-bottom:6px}.stat span{font-size:13px;color:#506a60}.message{border-radius:15px;background:#e6f4e8;padding:13px 14px;font-size:17px;font-weight:750;line-height:1.55}.help{font-size:13px;color:#597369;line-height:1.65}ol{padding-left:22px;margin-bottom:4px}li{margin:7px 0}.error{color:#ae3939}.success{background:#fff0b9}.foot{font-size:12px;color:#79867f;margin-top:10px}.tag{font-size:12px;color:#2d775b;font-weight:800}@media(max-width:420px){h1{font-size:21px}.app{padding:11px}.panel{padding:10px}.info{gap:6px}.stat{padding:9px}}
+</style></head><body><main class="app"><header><div><div class="tag">AI CAMERA LEARNING · v0.1.3</div><h1>🥢 젓가락 탐험대</h1><p class="sub">스마트폰 후면 카메라 · 상단 고정형 학습 게임</p></div><div class="score">⭐ <span id="score">0</span></div></header>
+<section class="panel"><div id="stage" class="stage"><video id="video" autoplay muted playsinline webkit-playsinline></video><canvas id="overlay" width="640" height="480"></canvas><div class="placeholder">📷 카메라를 켜면<br/>손·음식·목표 위치가 표시돼요.</div></div><div class="controls"><button id="start">📷 카메라 시작</button><button id="aiRetry" class="secondary">🧠 AI 다시 연결</button><button id="reset" class="secondary">↻ 미션 초기화</button><button id="stop" class="secondary">카메라 종료</button></div><p id="status" class="help" aria-live="polite">카메라 접근은 HTTPS 또는 localhost에서만 지원됩니다. 최초 실행에는 인터넷 연결이 필요합니다.</p><details open style="margin-top:12px"><summary style="font-size:13px;font-weight:700">진단 기록 보기</summary><div id="debugLog" style="font-size:12px;line-height:1.65;word-break:break-word;background:#f3f7f4;border-radius:10px;padding:10px;margin-top:8px;min-height:30px"></div></details><div class="controls"><button id="copyDebug" class="secondary">진단 내용 복사</button></div><p class="help">AI 파일 로딩은 인터넷 연결이 필요하며, 실패해도 카메라는 계속 실행됩니다.</p></section>
+<section class="panel"><div id="message" class="message" aria-live="polite">준비! 왼쪽에서 빨간 음식 장난감을 집어 오른쪽 목표 구역으로 옮겨주세요.</div><div class="info" style="margin-top:10px"><div class="stat"><b>🖐 손 관절 AI</b><span id="hand">대기</span></div><div class="stat"><b>🔴 빨간 음식 마커</b><span id="toy">대기</span></div><div class="stat"><b>🤏 집기 동작 추정</b><span id="pinch">대기</span></div><div class="stat"><b>🎯 미션 진행</b><span id="phase">시작 전</span></div></div></section>
+<section class="panel"><b>게임 준비 방법</b><ol class="help"><li>휴대전화를 상단 거치대에 고정해 카메라가 매트를 수직으로 내려다보게 해주세요.</li><li>빛 반사가 적은 연한 회색 또는 초록 매트를 사용하고, <b>빨간색 스티커가 붙은 장난감 음식 하나</b>를 화면 왼쪽 초록 시작 영역에 놓아주세요.</li><li>화면 오른쪽 파란 목표 영역에 음식 받을 그릇을 놓아주세요.</li><li>젓가락으로 음식을 집어 천천히 이동하고 목표에 놓아주세요. 초기 MVP는 손의 엄지·검지 간격을 집기의 대리 지표로 사용합니다.</li></ol><div class="foot">⚠ 연구용 MVP: 색상 기반 물체 검출이며 실제 젓가락-음식 접촉과 올바른 젓가락질 자세를 확정하지 않습니다. 영상은 서버로 전송하거나 저장하지 않습니다.</div></section></main>
+<script>
+// AI module is imported only after the camera has successfully started, avoiding an inert start button on Safari.
+let HandLandmarker, FilesetResolver;
+const $=id=>document.getElementById(id);
+const logBox=$('debugLog');let logCount=0;
+function log(message){let d=document.createElement('div');d.textContent=new Date().toLocaleTimeString('ko-KR')+' · '+message;logBox.prepend(d);while(logBox.childElementCount>12)logBox.lastChild.remove();}
+window.addEventListener('error',e=>log('스크립트 오류: '+e.message));
+window.addEventListener('unhandledrejection',e=>log('비동기 오류: '+(e.reason?.message||e.reason)));
+log('스크립트 연결 성공 · 보안 연결: '+(window.isSecureContext?'예':'아니오'));
+const video=$('video'),canvas=$('overlay'),ctx=canvas.getContext('2d'),stage=$('stage');
+const W=640,H=480;const SOURCE={x:.05,y:.34,w:.35,h:.53},TARGET={x:.67,y:.34,w:.28,h:.53};
+const work=document.createElement('canvas');work.width=320;work.height=240;const wc=work.getContext('2d',{willReadFrequently:true});
+let detector=null,stream=null,run=false,last=0,points=[],toy=null,pinch=false,phase='READY',score=0,gripOrigin=null,movePeak=0,confirm=0,lost=0,previousToy=null,prevHand=null,consistentMotion=0;
+const tell=(message,good=false)=>{$('message').textContent=message;$('message').className='message'+(good?' success':'')};
+const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);const inside=(p,r)=>p&&p.x>r.x&&p.x<r.x+r.w&&p.y>r.y&&p.y<r.y+r.h;
+function reset(){phase='READY';gripOrigin=null;movePeak=0;confirm=0;lost=0;previousToy=null;prevHand=null;consistentMotion=0;$('phase').textContent='집기 대기';tell('왼쪽 시작 구역에서 음식을 집고 오른쪽 목표 구역에 놓아주세요.');}
+$('reset').onclick=reset;
+const AI_VERSION='0.10.22';
+const AI_BASE='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+AI_VERSION;
+let aiStarting=false;
+function aiStatus(msg){$('status').textContent='✅ 카메라 실행 중 · '+msg;log(msg)}
+function withTimeout(promise,ms,label){return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' 시간 초과 ('+Math.round(ms/1000)+'초)')),ms))]);}
+async function initAI(){
+ if(detector)return;
+ if(aiStarting)return;
+ aiStarting=true;$('aiRetry').disabled=true;
+ try {
+  aiStatus('1/3 AI 라이브러리 불러오는 중…');
+  if(!HandLandmarker){
+   let pkg;
+   try{pkg=await withTimeout(import(AI_BASE+'/+esm'),18000,'jsDelivr 라이브러리 로딩');}
+   catch(e){log('첫 CDN 실패: '+(e.message||e));aiStatus('다른 CDN으로 재시도 중…');pkg=await withTimeout(import('https://esm.sh/@mediapipe/tasks-vision@'+AI_VERSION),18000,'대체 CDN 라이브러리 로딩');}
+   HandLandmarker=pkg.HandLandmarker;FilesetResolver=pkg.FilesetResolver;
+   if(!HandLandmarker||!FilesetResolver)throw new Error('AI 라이브러리에서 필요한 기능을 찾을 수 없습니다.');
+  }
+  aiStatus('2/3 AI WASM 실행 엔진 준비 중…');
+  let vision;
+  try{vision=await withTimeout(FilesetResolver.forVisionTasks(AI_BASE+'/wasm'),18000,'WASM 초기화');}
+  catch(e){log('WASM 초기화 첫 시도 실패: '+(e.message||e));aiStatus('WASM 엔진을 다른 경로로 재시도 중…');vision=await withTimeout(FilesetResolver.forVisionTasks('https://unpkg.com/@mediapipe/tasks-vision@'+AI_VERSION+'/wasm'),18000,'대체 WASM 초기화');}
+  aiStatus('3/3 손 관절 AI 모델 준비 중…');
+  detector=await withTimeout(HandLandmarker.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:'CPU'},
+    runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.55,minTrackingConfidence:.55
+  }),30000,'손 인식 모델 초기화');
+  aiStatus('AI 준비 완료 · 손을 카메라에 보여주세요.');
+  $('status').textContent='✅ 카메라 및 AI 실행 중 · 손과 빨간 마커를 보여주세요.';
+ }catch(e){
+   log('AI 초기화 실패: '+(e?.stack||e?.message||e));
+   $('status').className='help error';
+   $('status').textContent='✅ 카메라 정상 / ❌ AI 로딩 실패: '+(e?.message||String(e))+' · 아래 진단 내용 복사';
+   throw e;
+ }finally{aiStarting=false;$('aiRetry').disabled=false;}
+}
+$('aiRetry').onclick=async()=>{if(!stream){log('먼저 카메라를 시작해 주세요.');return;}try{await initAI()}catch(_){}};
+$('copyDebug').onclick=async()=>{
+ const data=Array.from(logBox.children).reverse().map(e=>e.textContent).join('\n')+'\n상태: '+$('status').textContent+'\n사용자 환경: '+navigator.userAgent;
+ try{await navigator.clipboard.writeText(data);log('진단 내용 복사 완료')}catch(e){log('복사 실패: '+(e.message||e));window.prompt('진단 내용 복사',data)}
+};
+log('환경: iOS 여부 '+(/iPhone|iPad|iPod/.test(navigator.userAgent)?'예':'아니오')+', WebAssembly '+(typeof WebAssembly!=='undefined'?'지원':'미지원'));
+try{let c=document.createElement('canvas');log('WebGL2: '+(c.getContext('webgl2')?'지원':'미지원'))}catch(e){log('WebGL 검사 오류: '+e.message)}
+function explainError(e){const n=e?.name||'';if(n==='NotAllowedError'||n==='PermissionDeniedError')return '카메라 권한이 거부되었습니다. iPhone 설정 > Safari(또는 앱) > 카메라 권한을 확인하세요.';if(n==='NotFoundError')return '사용 가능한 카메라가 없습니다.';if(n==='NotReadableError')return '다른 앱이 카메라를 사용 중일 수 있습니다. 카메라 앱을 닫고 다시 실행해 주세요.';return (e?.message||String(e));}
+let lastAnalysisError='';let starting=false;
+async function startCamera(){
+ if(starting)return;
+ starting=true; $('start').disabled=true;$('status').className='help';log('카메라 시작 버튼 눌림');
+ try{
+  if(!window.isSecureContext)throw new Error('HTTPS 연결이 아닙니다. 파일 앱에서 열지 말고 Safari의 HTTPS 주소에서 실행해 주세요.');
+  if(!navigator.mediaDevices?.getUserMedia)throw new Error('getUserMedia를 사용할 수 없습니다. Safari에서 HTTPS 주소인지 확인해 주세요.');
+  $('status').textContent='카메라 사용 권한 요청 중…';log('getUserMedia 호출');
+  try {stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});}
+  catch(err){log('후면 카메라 요청 실패: '+explainError(err));if(err.name==='OverconstrainedError')stream=await navigator.mediaDevices.getUserMedia({audio:false,video:true});else throw err;}
+  log('카메라 스트림 연결됨: '+stream.getVideoTracks().map(t=>t.label||'비디오 트랙').join(', '));
+  video.srcObject=stream;video.muted=true;video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
+  video.autoplay=true;
+  try{await video.play();log('비디오 재생 성공');}catch(e){log('비디오 재생 요청 실패: '+explainError(e));$('status').textContent='카메라 권한 승인됨 · 영상 재생 확인 중';}
+  stage.classList.add('ready');run=true;reset();
+  $('status').textContent='✅ 카메라 스트림 연결됨 · AI 초기화 중';
+  requestAnimationFrame(loop);
+ }catch(e){log('카메라 시작 실패: '+explainError(e));$('status').className='help error';$('status').textContent='카메라 시작 실패: '+explainError(e);if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}starting=false;$('start').disabled=false;return;}
+ starting=false;
+ try{await initAI();}catch(e){/* 상세 오류는 initAI가 화면에 표시함 */}
+}
+$('start').addEventListener('click',startCamera);
+log('카메라 시작 버튼 이벤트 연결됨');
+$('stop').onclick=()=>{log('카메라 종료 버튼 눌림');run=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;stage.classList.remove('ready');$('start').disabled=false;$('status').textContent='카메라 종료';ctx.clearRect(0,0,W,H)};
+function findRedToy(){wc.drawImage(video,0,0,320,240);const data=wc.getImageData(0,0,320,240).data;let sx=0,sy=0,n=0;for(let y=12;y<227;y+=2)for(let x=12;x<308;x+=2){let i=(y*320+x)*4,r=data[i],g=data[i+1],b=data[i+2];if(r>110&&r>g*1.6&&r>b*1.4&&(r-g)>50){sx+=x;sy+=y;n++;}}if(n<25)return null;return {x:sx/n/320,y:sy/n/240,n};}
+function drawRect(r,color,label){ctx.fillStyle=color+'18';ctx.fillRect(r.x*W,r.y*H,r.w*W,r.h*H);ctx.strokeStyle=color;ctx.lineWidth=3;ctx.setLineDash([9,5]);ctx.strokeRect(r.x*W,r.y*H,r.w*W,r.h*H);ctx.setLineDash([]);ctx.fillStyle=color;ctx.font='bold 21px system-ui';ctx.fillText(label,r.x*W+8,r.y*H+26);}
+const links=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+function render(){ctx.clearRect(0,0,W,H);drawRect(SOURCE,'#5ce3a1','① 시작');drawRect(TARGET,'#8dd0ff','② 목표');if(toy){ctx.beginPath();ctx.arc(toy.x*W,toy.y*H,21,0,Math.PI*2);ctx.strokeStyle='#ffdf54';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#ffdf54';ctx.font='bold 17px system-ui';ctx.fillText('음식',toy.x*W+26,toy.y*H-12);}if(points.length){ctx.strokeStyle='#46f8cc';ctx.lineWidth=3;for(const [a,b] of links){ctx.beginPath();ctx.moveTo(points[a].x*W,points[a].y*H);ctx.lineTo(points[b].x*W,points[b].y*H);ctx.stroke()}for(const p of points){ctx.beginPath();ctx.arc(p.x*W,p.y*H,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();}ctx.fillStyle=pinch?'#fbd55b':'#fff';const p={x:(points[4].x+points[8].x)/2,y:(points[4].y+points[8].y)/2};ctx.beginPath();ctx.arc(p.x*W,p.y*H,12,0,Math.PI*2);ctx.strokeStyle=pinch?'#ffe05c':'#ffffff';ctx.lineWidth=3;ctx.stroke();}}
+function step(now){if(video.readyState<2)return;toy=findRedToy();let result=detector?detector.detectForVideo(video,now):null;points=result?.landmarks?.[0]||[];
+let center=null;if(points.length){center={x:(points[4].x+points[8].x)/2,y:(points[4].y+points[8].y)/2};const palm=Math.max(distance(points[0],points[9]),.03);pinch=distance(points[4],points[8])/palm<.62;}else pinch=false;
+$('hand').textContent=!detector?'AI 로딩 대기 / 실패':points.length?'21개 관절 추적 중':'손을 화면에 보여주세요';$('toy').textContent=toy?'감지 중 ('+toy.n+'점)':'빨간 마커가 안 보여요';$('pinch').textContent=pinch?'집기 모양 추정':'열림 / 미검출';
+// MVP 가설: 빨간 음식 마커와 손가락 끝의 근접성 + 집기 형상 + 이동 상관성.
+const near=!!(detector&&center&&toy&&distance(center,toy)<.18);
+if(phase==='READY'){if(toy&&inside(toy,SOURCE)&&pinch&&near){confirm++;if(confirm>=4){phase='HELD';gripOrigin={...toy};movePeak=0;consistentMotion=0;confirm=0;tell('잘 집었어요! 목표 구역까지 옮겨볼까요?');}}else confirm=0;}
+else if(phase==='HELD'||phase==='MOVING'){
+if(toy&&gripOrigin){movePeak=Math.max(movePeak,distance(toy,gripOrigin));if(previousToy&&prevHand&&center){const dt={x:toy.x-previousToy.x,y:toy.y-previousToy.y},dh={x:center.x-prevHand.x,y:center.y-prevHand.y};const motion=Math.hypot(dt.x,dt.y);if(motion>.004&&motion<.08&&Math.hypot(dh.x,dh.y)>.004&&dt.x*dh.x+dt.y*dh.y>0)consistentMotion++;}if(movePeak>.16&&consistentMotion>=2)phase='MOVING';}
+if(!toy||(!pinch&&!inside(toy,TARGET))){lost++;if(lost>8){reset();tell('음식이 떨어졌거나 손이 멀어졌어요. 다시 시작해 보세요.')}}else lost=0;
+if(phase==='MOVING'&&toy&&inside(toy,TARGET)&&!pinch){confirm++;if(confirm>=5){phase='SUCCESS';score+=10;$('score').textContent=score;tell('🎉 성공! 목표에 음식을 놓았어요. 별 10개 획득!',true);$('phase').textContent='성공';setTimeout(()=>{if(run&&phase==='SUCCESS')reset()},2400)}}else confirm=0;
+}
+previousToy=toy?{...toy}:null;prevHand=center?{...center}:null;
+$('phase').textContent=({READY:'집기 대기',HELD:'집은 상태 추정',MOVING:'이동 확인',SUCCESS:'미션 성공'})[phase];render();}
+function loop(now){if(!run)return;if(now-last>85){last=now;try{step(now)}catch(e){$('status').textContent='분석 오류: '+e.message;if(lastAnalysisError!==e.message){lastAnalysisError=e.message;log('분석 오류: '+e.message)}}}requestAnimationFrame(loop)}
+</script></body></html>
