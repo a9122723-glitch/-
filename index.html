@@ -23,7 +23,7 @@ const tell=(message,good=false)=>{$('message').textContent=message;$('message').
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);const inside=(p,r)=>p&&p.x>r.x&&p.x<r.x+r.w&&p.y>r.y&&p.y<r.y+r.h;
 function reset(){phase='READY';gripOrigin=null;movePeak=0;confirm=0;lost=0;previousToy=null;prevHand=null;consistentMotion=0;$('phase').textContent='집기 대기';tell('왼쪽 시작 구역에서 음식을 집고 오른쪽 목표 구역에 놓아주세요.');}
 $('reset').onclick=reset;
-const AI_VERSION='0.10.22';
+const AI_VERSION='1.2.3';
 const AI_BASE='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+AI_VERSION;
 let aiStarting=false;
 function aiStatus(msg){$('status').textContent='✅ 카메라 실행 중 · '+msg;log(msg)}
