@@ -1,138 +1,1065 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#8fd3ff"><title>콕콕 젓가락 대모험 v0.8</title>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#72c6ff">
+<title>🐰 콕콕 젓가락 대모험 v1.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#26324d;--sky:#bfe6ff;--sun:#ffd23f;--coral:#ff6f59;--mint:#3ccf9a;--paper:#fffdf5;font-family:"Jua","Apple SD Gothic Neo",system-ui,sans-serif;color:var(--ink)}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 12% 8%,#fff 0 6%,transparent 6.5%),radial-gradient(circle at 90% 20%,#fff 0 5%,transparent 5.5%),linear-gradient(#8fd3ff,#d9f2ff);min-height:100vh}
-button,select{font:inherit;color:var(--ink)}
-.app{height:100vh;height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) clamp(230px,27vw,310px);grid-template-rows:auto 1fr;gap:10px;padding:10px;padding-top:max(10px,env(safe-area-inset-top))}
-header{grid-column:1/-1;display:flex;align-items:center;gap:10px}
-h1{margin:0;font-size:clamp(20px,3vw,30px);font-weight:400;flex:1;text-shadow:2px 2px 0 #fff}
-.chip{background:var(--sun);border:3px solid var(--ink);border-radius:999px;padding:4px 14px;font-size:20px;box-shadow:3px 3px 0 var(--ink)}
-.play{min-height:0;display:flex;flex-direction:column;gap:8px}
-.cam{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#fff;border:4px solid var(--ink);border-radius:26px;box-shadow:6px 6px 0 var(--ink);overflow:hidden}
-#stage{position:relative;background:#16324a;overflow:hidden;width:100%;height:100%}
-#stage video,#stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}#stage canvas{pointer-events:none}
-#ph{position:absolute;inset:0;display:grid;place-content:center;text-align:center;color:#fff;font-size:clamp(18px,3vw,28px);line-height:1.6;padding:12px}#ph b{font-size:3em;display:block}
-#stage.on #ph{display:none}
-#end{position:absolute;inset:0;display:none;place-items:center;background:#26324dcc;z-index:3}#end.show{display:grid}
-#end>div{background:var(--paper);border:4px solid var(--ink);border-radius:26px;padding:20px 28px;text-align:center;box-shadow:6px 6px 0 var(--coral)}#end h2{margin:0;font-size:30px;font-weight:400}#stars{font-size:44px}
-.bub{display:flex;gap:10px;align-items:center;background:var(--paper);border:4px solid var(--ink);border-radius:22px;padding:8px 14px;box-shadow:4px 4px 0 var(--ink);min-height:68px}
-.bub .m{font-size:44px;animation:hop 1.6s ease-in-out infinite}.bub p{margin:0;font-size:clamp(15px,2.2vw,21px);line-height:1.35}.bub.win{background:#fff3b0}
-@keyframes hop{50%{transform:translateY(-6px) rotate(-5deg)}}@media(prefers-reduced-motion:reduce){.bub .m{animation:none}}
-aside{min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:2px 6px 8px 2px}
-.card{background:var(--paper);border:3px solid var(--ink);border-radius:20px;padding:10px 12px;box-shadow:4px 4px 0 var(--ink)}
-.card h3{margin:0 0 6px;font-size:17px;font-weight:400}
-button{border:3px solid var(--ink);border-radius:16px;background:#fff;padding:10px;font-size:16px;cursor:pointer;box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s}
-button:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}button:disabled{opacity:.45}button:focus-visible,select:focus-visible{outline:4px solid #6c8cff;outline-offset:2px}
-.go{background:var(--mint);font-size:22px;width:100%}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-select{width:100%;border:3px solid var(--ink);border-radius:12px;padding:8px;background:#fff;font-size:15px}
-.tgt{display:flex;gap:6px;align-items:center;font-size:18px}.dot{width:26px;height:26px;border-radius:50%;border:3px solid var(--ink)}
-ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}li{font-size:15px;display:flex;gap:6px;align-items:center}li i{font-style:normal;width:24px;text-align:center}li.ok{color:#0b8a5c}
-.bar{height:12px;border:2px solid var(--ink);border-radius:9px;background:#fff;overflow:hidden}.bar div{height:100%;width:0;background:var(--sun);transition:width .15s}
-.mini{font-size:12px;line-height:1.5;color:#4a5878}#log{font-size:11px;max-height:90px;overflow:auto}
-@media(orientation:portrait){body{overflow:auto}.app{height:auto;grid-template-columns:1fr}.cam{height:56vw;min-height:200px;flex:none}aside{overflow:visible}}
-</style></head><body><div class="app">
-<header><h1>🐰 콕콕 젓가락 대모험</h1><span class="chip">⭐ <span id="score">0</span></span><span class="chip">⏱ <span id="time">01:00</span></span></header>
-<section class="play"><div class="cam"><div id="stage"><video id="v" autoplay muted playsinline></video><canvas id="ov" width="960" height="540"></canvas>
-<div id="ph"><div><b>📷</b>‘카메라 켜기’를 눌러요!<br><small>폰을 가로로 돌리면 더 크게 보여요</small></div></div>
-<div id="end"><div><h2>🏆 시간 끝!</h2><div id="stars"></div><p id="res"></p><button class="go" id="again">🔄 또 하기</button></div></div></div></div>
-<div class="bub" id="bub"><span class="m">🐰</span><p id="msg">안녕! 나는 토끼 코치 콕콕이야. 카메라를 켜고 같이 젓가락 연습하자!</p></div></section>
-<aside>
-<button class="go" id="start">📷 카메라 켜기</button>
-<div class="card"><h3>🎮 게임</h3><select id="dur" aria-label="제한시간"><option value="30">⏱ 30초</option><option value="60" selected>⏱ 1분</option><option value="120">⏱ 2분</option></select>
-<button class="go" id="play" disabled style="margin-top:8px;background:var(--sun)">▶ 게임 시작</button>
-<div class="tgt" style="margin-top:8px">🎯 목표 <span class="dot" id="dot"></span><b id="tname">빨강</b></div><div class="mini" id="vis">같은 색 장난감을 한 개씩 놓아 주세요.</div></div>
-<div class="card"><h3>🥢 올바른 젓가락 자세</h3><ul>
-<li id="c1"><i>⭕</i>엄지·검지로 살짝 잡기</li><li id="c2"><i>⭕</i>가운뎃손가락으로 받치기</li><li id="c3"><i>⭕</i>약지·새끼손가락 접기</li><li id="c4"><i>⭕</i>젓가락 끝이 앞으로</li></ul>
-<div class="bar" style="margin-top:8px"><div id="pbar"></div></div><div class="mini" id="pt">자세 점수 0/4</div></div>
-<div class="card"><h3>📈 지금 상태</h3><div class="mini" id="st">대기 중</div><div class="bar" style="margin-top:6px"><div id="gbar"></div></div></div>
-<div class="row"><button id="voiceB">🔊 음성 켜짐</button><button id="retry">AI 다시</button></div><button id="stop">⏹ 끄기</button>
-<details class="card"><summary>⚙️ 설정·안내</summary><label class="mini">카메라-매트 거리(cm)<input id="mount" type="number" min="25" max="120" value="55" style="width:100%"></label>
-<div class="mini">흰색 젓가락 교구를 어두운 무광 매트 위에서 비춰 주세요. 높이는 영상 크기 변화로 추정한 값이라 실제와 다를 수 있어요. 영상은 기기 안에서만 분석하고 저장·전송하지 않아요.</div><div id="log"></div></details>
-</aside></div>
-<script>
-'use strict';
-const $=i=>document.getElementById(i),video=$('v'),cv=$('ov'),cx=cv.getContext('2d'),stage=$('stage'),wk=document.createElement('canvas'),wc=wk.getContext('2d',{willReadFrequently:true});
-const V='1.2.3',CDN=['https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@','https://unpkg.com/@mediapipe/tasks-vision@'];
-const COL={red:['빨강','#ff5d5d'],blue:['파랑','#4aa3ff'],green:['초록','#3ccf7e'],yellow:['노랑','#ffd23f'],purple:['보라','#b57bff']},KEYS=Object.keys(COL);
-let FW=320,FH=180,W=960,H=540,mask,wl,stream=null,det=null,aiBusy=false,running=false,voiceOn=true,voiceOK=false,session=false,endAt=0,dur=60,score=0,wins=0;
-let target='red',lastWin=null,phase='READY',base=0,bf=0,gc=0,lf=0,anchor=null,gripAt=0,lastNear=0,lostAt=0,cool=0,hand=null,lastFrame=0,lastSay=0,lastKey='',lastCoach=0,coachIdx=0,vis={};
-const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function log(s){const d=document.createElement('div');d.textContent=new Date().toLocaleTimeString('ko-KR')+' '+s;$('log').prepend(d);while($('log').childElementCount>25)$('log').lastChild.remove()}
-addEventListener('error',e=>log('오류: '+e.message));addEventListener('unhandledrejection',e=>log('오류: '+(e.reason?.message||e.reason)));
-function msg(s,win){$('msg').textContent=s;$('bub').className='bub'+(win?' win':'')}
-// 음성: 카메라/게임 시작 버튼(사용자 제스처)에서 잠금 해제
-function unlock(){if(voiceOK||!('speechSynthesis'in window))return;voiceOK=true;try{speechSynthesis.speak(new SpeechSynthesisUtterance(''))}catch{}}
-function say(t,key,urgent){msg(t,urgent&&key==='win');if(!voiceOn||!voiceOK||!('speechSynthesis'in window))return;const n=Date.now();
- if(!urgent&&(n-lastSay<4200||speechSynthesis.speaking))return;if(!urgent&&key===lastKey&&n-lastSay<12000)return;
- try{if(urgent)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';u.rate=1;u.pitch=1.15;const ko=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith('ko'));if(ko)u.voice=ko;speechSynthesis.speak(u);lastSay=n;lastKey=key}catch(e){log('음성 '+e.message)}}
-$('voiceB').onclick=()=>{unlock();voiceOn=!voiceOn;$('voiceB').textContent=voiceOn?'🔊 음성 켜짐':'🔇 음성 꺼짐';if(voiceOn)say('좋아요! 같이 연습해요!','t',true)};
-// 화면 크기: 영상 해상도가 바뀌면(회전 등) 다시 계산
-function sizeStage(){const r=$('stage').parentElement.getBoundingClientRect(),q=W/H;let w=Math.min(r.width,r.height*q);stage.style.width=Math.max(1,w)+'px';stage.style.height=Math.max(1,w/q)+'px'}
-function setup(){W=video.videoWidth||960;H=video.videoHeight||540;cv.width=W;cv.height=H;FW=320;FH=Math.max(120,Math.round(320*H/W));wk.width=FW;wk.height=FH;mask=new Uint8Array(FW*FH);wl=new Int32Array(FW*FH);sizeStage();log('영상 '+W+'×'+H)}
-video.addEventListener('resize',()=>{if(running)setup()});addEventListener('resize',sizeStage);addEventListener('orientationchange',()=>setTimeout(sizeStage,300));
-function cls(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(mx<75||d<55||d/mx<.47)return;let h=mx===r?(60*((g-b)/d)+360)%360:mx===g?60*((b-r)/d+2):60*((r-g)/d+4);
- if((h>=350||h<=10)&&r>140&&r-g>75&&r-b>70)return'red';if(h>=195&&h<=257&&b>112)return'blue';if(h>=75&&h<=170&&g>95)return'green';if(h>=42&&h<=69&&r>140&&g>115&&b<Math.min(r,g)*.65)return'yellow';if(h>=262&&h<=334&&b>90)return'purple'}
-function scan(d){mask.fill(0);if(hand){const R=Math.max(6,Math.max(.03,dist(hand[0],hand[9]))*FW*.4);for(const p of hand){const px=p.x*FW,py=p.y*FH;for(let y=Math.max(0,py-R|0);y<Math.min(FH,py+R);y++)for(let x=Math.max(0,px-R|0);x<Math.min(FW,px+R);x++)mask[y*FW+x]=1}}
- const S={};for(const k of KEYS)S[k]={n:0,x:0,y:0};let wn=0,wx=0,wy=0;
- for(let y=2;y<FH-2;y++)for(let x=2;x<FW-2;x++){const i=y*FW+x;if(mask[i])continue;const j=i*4,r=d[j],g=d[j+1],b=d[j+2],mn=Math.min(r,g,b),mx=Math.max(r,g,b);
-  if(mn>=169&&mx-mn<=51&&mx>=189){wl[wn++]=i;wx+=x;wy+=y;continue}const c=cls(r,g,b);if(c){const s=S[c];s.n++;s.x+=x;s.y+=y}}
- let tip=null;if(wn>=60){const mx=wx/wn,my=wy/wn;let b=-1;for(let k=0;k<wn;k+=2){const x=wl[k]%FW,y=(wl[k]/FW)|0,q=(x-mx)**2+(y-my)**2;if(q>b){b=q;tip={x:x/FW,y:y/FH}}}}
- return{S,tip}}
-// 자세 코칭: 손 관절 기반(점수와 분리, 계속 안내)
-function pose(tip){const p=hand,pl=Math.max(.03,dist(p[0],p[9])),m=dist(p[12],p[0]);
- return[dist(p[4],p[8])/pl<1,dist(p[8],p[12])/pl<.8,dist(p[16],p[0])<m*.9&&dist(p[20],p[0])<m*.9,!!tip&&dist(tip,p[0])>dist(p[8],p[0])*1.05]}
-const TIPS=['엄지와 검지로 젓가락을 살짝 잡아 볼까요?','가운뎃손가락을 검지 옆에 붙여 받쳐 주세요.','약지와 새끼손가락은 안쪽으로 살짝 접어요.','젓가락 끝이 손가락보다 앞으로 나오게 잡아요!'],PRAISE=['와, 자세가 멋져요! 이제 음식을 콕!','좋아요! 손에 힘을 빼고 천천히 해요.','젓가락 선생님 같아요! 계속 해 봐요.'];
-function coach(tip,t){if(!hand){$('pt').textContent='손을 화면에 보여 주세요';if(t-lastCoach>6000&&!session){lastCoach=t;say('손을 카메라에 보여 주세요!','nohand')}return}
- const ok=pose(tip);ok.forEach((v,i)=>{const e=$('c'+(i+1));e.className=v?'ok':'';e.firstChild.textContent=v?'✅':'⭕'});const n=ok.filter(Boolean).length;
- $('pbar').style.width=n*25+'%';$('pt').textContent='자세 점수 '+n+'/4';
- if(t-lastCoach>5000){lastCoach=t;const bad=ok.indexOf(false);if(bad<0)say(PRAISE[coachIdx++%3],'good');else say(TIPS[bad],'tip'+bad)}}
-function pickTarget(){const c=KEYS.filter(k=>k!==lastWin),seen=c.filter(k=>vis[k]);const i=KEYS.indexOf(lastWin);const ord=KEYS.slice(i+1).concat(KEYS.slice(0,i+1));target=ord.find(k=>seen.includes(k))||ord.find(k=>k!==lastWin)||'red';showTarget()}
-function showTarget(){$('tname').textContent=COL[target][0];$('dot').style.background=COL[target][1]}
-function resetRound(){phase='READY';base=0;bf=0;gc=lf=0;anchor=null;$('gbar').style.width='0'}
-function win(food){if(!session||cool>performance.now())return;cool=performance.now()+1400;wins++;score=wins*10;lastWin=target;$('score').textContent=score;$('gbar').style.width='100%';
- say('와! 성공이에요! 별 10개 획득! ⭐','win',true);resetRound();pickTarget();setTimeout(()=>session&&say(COL[target][0]+' 음식을 집어 볼까요?','next'),2300)}
-function update(t){hand=det?.detectForVideo(video,t)?.landmarks?.[0]||null;wc.drawImage(video,0,0,FW,FH);const{S,tip}=scan(wc.getImageData(0,0,FW,FH).data);
- for(const k of KEYS)vis[k]=S[k].n>=40;const vn=KEYS.filter(k=>vis[k]).map(k=>COL[k][0]);$('vis').textContent=vn.length?'보이는 색: '+vn.join(' · '):'색깔 장난감이 안 보여요';
- const s=S[target],food=s.n>=30?{x:s.x/s.n/FW,y:s.y/s.n/FH,n:s.n,r:Math.sqrt(s.n/Math.PI)/FW}:null;
- const near=!!(tip&&food&&dist(tip,food)<Math.max(.1,food.r*4));if(near)lastNear=t;
- coach(tip,t);
- if(session){
-  if(phase==='READY'){
-   if(food&&!near){base=base?base*.85+food.n*.15:food.n;bf++}
-   if(food&&near&&bf>=4){gc++;if(gc>=5){phase='GRIP';anchor={x:food.x,y:food.y};gripAt=t;lf=0;lostAt=0;say('좋아요! 이제 위로 쏙 들어 올려 봐요!','grip',true)}}else gc=Math.max(0,gc-1);
-   $('st').textContent=food?(near?'🥢 집는 중…':'젓가락 끝을 음식에 가까이!'):COL[target][0]+' 음식을 보여 주세요';$('gbar').style.width=gc*20+'%'}
-  else if(phase==='GRIP'){
-   if(!food){if(!lostAt)lostAt=t;if(t-lostAt>3000){resetRound();say('앗, 음식이 안 보여요. 다시 해 봐요!','retry',true)}$('st').textContent='음식이 가려졌어요'}
-   else{lostAt=0;const sc=Math.sqrt(food.n/Math.max(8,base)),h=Math.min(35,Math.max(0,Math.min(120,Math.max(25,+$('mount').value||55))*(1-1/Math.max(.3,sc))));
-    const ok=t-lastNear<1500&&dist(food,anchor)<.16&&h>=5;lf=ok?lf+1:Math.max(0,lf-1);$('st').textContent='들어 올린 높이 약 '+h.toFixed(1)+'cm (추정)';$('gbar').style.width=Math.min(100,Math.round(h/5*60+lf*6))+'%';
-    if(lf>=6)win(food)}
-   if(phase==='GRIP'&&t-gripAt>9000){resetRound();say('괜찮아요, 다시 도전해 봐요!','retry',true)}}}
- else $('st').textContent=running?'연습 중 · 게임 시작을 눌러요':'대기 중';
- // 화면 표시
- cx.clearRect(0,0,W,H);cx.lineWidth=Math.max(3,W/300);
- if(food){cx.strokeStyle=COL[target][1];cx.lineWidth=6;cx.beginPath();cx.arc(food.x*W,food.y*H,Math.max(18,food.r*W*1.2),0,7);cx.stroke()}
- if(tip){cx.fillStyle='#fff';cx.strokeStyle='#26324d';cx.lineWidth=4;cx.beginPath();cx.arc(tip.x*W,tip.y*H,10,0,7);cx.fill();cx.stroke()}
- if(hand){cx.fillStyle='#ffd23f';for(const p of hand){cx.beginPath();cx.arc(p.x*W,p.y*H,4,0,7);cx.fill()}}}
-const fmt=s=>{s=Math.max(0,Math.ceil(s));return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function loop(t){if(!running)return;if(session){$('time').textContent=fmt((endAt-performance.now())/1000);if(performance.now()>=endAt)finish()}
- if(video.readyState>=2&&t-lastFrame>=110){lastFrame=t;try{update(t)}catch(e){log('분석 오류: '+e.message)}}requestAnimationFrame(loop)}
-function begin(){unlock();if(!running||!det){msg('카메라와 AI가 준비되면 시작할 수 있어요!');return}dur=+$('dur').value||60;wins=score=0;lastWin=null;$('score').textContent=0;$('end').classList.remove('show');
- session=true;endAt=performance.now()+dur*1000;resetRound();pickTarget();$('play').disabled=true;say('시작! '+COL[target][0]+' 음식을 젓가락으로 집어 올려요!','go',true)}
-function finish(){session=false;$('play').disabled=false;$('time').textContent=fmt(dur);const st=Math.min(5,wins);$('stars').textContent='⭐'.repeat(st)+'☆'.repeat(5-st);$('res').textContent='성공 '+wins+'번 · '+score+'점';$('end').classList.add('show');say('시간 끝! '+wins+'번 성공했어요. 정말 잘했어요!','end',true)}
-$('play').onclick=begin;$('again').onclick=begin;$('dur').onchange=()=>{$('time').textContent=fmt(+$('dur').value)};
-async function initAI(){if(det&&det.close){try{det.close()}catch{}}det=null;if(aiBusy)return;aiBusy=true;$('retry').disabled=true;
- try{let pkg,vision,err;msg('AI 친구를 불러오는 중…');for(const c of CDN){try{pkg=await Promise.race([import(c+V+'/vision_bundle.mjs'),new Promise((_,j)=>setTimeout(()=>j(Error('시간 초과')),18000))]);break}catch(e){err=e;log('CDN '+e.message)}}if(!pkg)throw err;
-  for(const c of CDN){try{vision=await pkg.FilesetResolver.forVisionTasks(c+V+'/wasm');break}catch(e){err=e}}if(!vision)throw err;
-  det=await pkg.HandLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.55,minTrackingConfidence:.55});
-  $('play').disabled=session;say('준비 완료! 손을 보여 주면 자세를 알려 줄게요.','ready',true);log('AI 준비')}
- catch(e){msg('AI를 불러오지 못했어요. ‘AI 다시’를 눌러 주세요.');log('AI 오류 '+e.message)}finally{aiBusy=false;$('retry').disabled=false}}
-$('retry').onclick=()=>{if(!stream){msg('먼저 카메라를 켜 주세요.');return}initAI()};
-$('start').onclick=async()=>{unlock();if(stream)return;$('start').disabled=true;
- try{if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)throw Error('HTTPS 주소에서 열어 주세요');
-  stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
-  video.srcObject=stream;await video.play();running=true;setup();stage.classList.add('on');showTarget();requestAnimationFrame(loop);initAI()}
- catch(e){msg('카메라 오류: '+e.message);log(e.message);stream?.getTracks().forEach(t=>t.stop());stream=null;$('start').disabled=false}};
-$('stop').onclick=()=>{session=false;running=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;stage.classList.remove('on');$('start').disabled=false;$('play').disabled=true;$('end').classList.remove('show');cx.clearRect(0,0,W,H);speechSynthesis?.cancel();msg('카메라를 껐어요. 또 만나요! 👋')};
-if('speechSynthesis'in window)speechSynthesis.getVoices();showTarget();sizeStage();
-</script></body></html>
+:root {
+  --ink: #25304c;
+  --sky-top: #72c6ff;
+  --sky-bot: #e3f5ff;
+  --sun: #ffd43b;
+  --sun-dark: #f59f00;
+  --coral: #ff6b6b;
+  --coral-dark: #fa5252;
+  --mint: #38d9a9;
+  --mint-dark: #20c997;
+  --grape: #9775fa;
+  --paper: #fffdf7;
+  --cream: #fff9db;
+  font-family: "Jua", "Apple SD Gothic Neo", system-ui, sans-serif;
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(255,255,255,0.9) 0 42px, transparent 44px),
+    radial-gradient(circle at 13% 10%, rgba(255,255,255,0.9) 0 32px, transparent 34px),
+    radial-gradient(circle at 88% 16%, rgba(255,255,255,0.85) 0 48px, transparent 50px),
+    radial-gradient(circle at 93% 14%, rgba(255,255,255,0.85) 0 30px, transparent 32px),
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bot) 78%, #b2f2bb 78%, #8ce99a 100%);
+  overflow: hidden;
+}
+
+button, select, input { font: inherit; color: var(--ink); }
+
+.app {
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(260px, 28vw, 340px);
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  padding: 12px;
+  padding-top: max(12px, env(safe-area-inset-top));
+}
+
+header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(6px);
+  border: 4px solid var(--ink);
+  border-radius: 26px;
+  padding: 8px 16px;
+  box-shadow: 0 5px 0 var(--ink);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(20px, 2.8vw, 30px);
+  font-weight: 400;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 2px 2px 0 #fff;
+}
+
+.badge-ver {
+  font-size: 13px;
+  background: var(--grape);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  text-shadow: none;
+}
+
+.chip {
+  background: var(--sun);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 5px 16px;
+  font-size: clamp(17px, 2.2vw, 22px);
+  box-shadow: 0 4px 0 var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip.timer { background: #fff; }
+.chip.timer.urgent { background: #ffe3e3; color: #e03131; animation: pulse 0.8s infinite; }
+
+@keyframes pulse { 50% { transform: scale(1.06); } }
+
+.play {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cam {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1b2a4a;
+  border: 5px solid var(--ink);
+  border-radius: 30px;
+  box-shadow: 0 7px 0 var(--ink);
+  overflow: hidden;
+  position: relative;
+}
+
+#stage {
+  position: relative;
+  background: #14213d;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+#stage video, #stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+#stage.mirror video, #stage.mirror canvas {
+  transform: scaleX(-1);
+}
+
+#stage canvas { pointer-events: none; }
+
+#ph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: #fff;
+  font-size: clamp(18px, 2.8vw, 26px);
+  line-height: 1.6;
+  padding: 20px;
+  background: radial-gradient(circle at center, #264073 0%, #14213d 100%);
+}
+
+#ph .cam-icon {
+  font-size: 64px;
+  display: inline-block;
+  margin-bottom: 8px;
+  animation: float 2.4s ease-in-out infinite;
+}
+
+@keyframes float { 50% { transform: translateY(-8px); } }
+
+#stage.on #ph { display: none; }
+
+/* 미션 배너 (카메라 상단 플로팅) */
+.hud-target {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 253, 247, 0.95);
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  padding: 6px 20px;
+  box-shadow: 0 5px 0 var(--ink);
+  font-size: clamp(18px, 2.4vw, 24px);
+  white-space: nowrap;
+}
+
+#stage.on .hud-target { display: flex; }
+
+.hud-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18);
+}
+
+/* 종료 팝업 */
+#end {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(37, 48, 76, 0.82);
+  backdrop-filter: blur(4px);
+  z-index: 5;
+  padding: 16px;
+}
+
+#end.show { display: grid; }
+
+#end .modal {
+  background: var(--paper);
+  border: 5px solid var(--ink);
+  border-radius: 32px;
+  padding: 24px 32px;
+  text-align: center;
+  box-shadow: 0 8px 0 var(--coral);
+  max-width: 400px;
+  width: 100%;
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+#end h2 { margin: 0 0 8px; font-size: 34px; font-weight: 400; color: var(--coral-dark); }
+#stars { font-size: 46px; margin: 8px 0; letter-spacing: 4px; }
+#res { font-size: 22px; margin: 8px 0 18px; }
+
+/* 코치 말풍선 */
+.bub {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  border-radius: 26px;
+  padding: 10px 18px;
+  box-shadow: 0 5px 0 var(--ink);
+  min-height: 76px;
+  transition: background 0.25s, transform 0.2s;
+}
+
+.bub .avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #ffe8cc;
+  border: 3px solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  flex-shrink: 0;
+  animation: hop 1.8s ease-in-out infinite;
+}
+
+.bub p {
+  margin: 0;
+  font-size: clamp(16px, 2.2vw, 22px);
+  line-height: 1.35;
+}
+
+.bub.win {
+  background: #fff3bf;
+  transform: scale(1.01);
+}
+
+@keyframes hop { 50% { transform: translateY(-6px) rotate(-6deg); } }
+
+/* 우측 컨트롤 패널 */
+aside {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 6px 12px 2px;
+}
+
+aside::-webkit-scrollbar { width: 8px; }
+aside::-webkit-scrollbar-thumb { background: rgba(37,48,76,0.25); border-radius: 99px; }
+
+.card {
+  background: var(--paper);
+  border: 4px solid var(--ink);
+  border-radius: 24px;
+  padding: 12px 14px;
+  box-shadow: 0 5px 0 var(--ink);
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+button {
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: #fff;
+  padding: 10px 12px;
+  font-size: 17px;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s, background 0.15s;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:focus-visible, select:focus-visible { outline: 4px solid var(--grape); outline-offset: 2px; }
+
+.btn-cam {
+  background: var(--mint);
+  font-size: 22px;
+  width: 100%;
+  padding: 12px;
+}
+
+.btn-play {
+  background: var(--sun);
+  font-size: 22px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+}
+
+.btn-stop {
+  background: #ffc9c9;
+  font-size: 16px;
+}
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+select {
+  width: 100%;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  padding: 8px 10px;
+  background: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* 자세 체크리스트 */
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+li {
+  font-size: 15px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+li i { font-style: normal; width: 22px; text-align: center; font-size: 16px; }
+li.ok {
+  background: #e6fcf5;
+  border-color: #38d9a9;
+  color: #087f5b;
+}
+
+.bar {
+  height: 14px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.bar div {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--sun), #ffa94d);
+  transition: width 0.15s ease-out;
+}
+
+.bar.mint div {
+  background: linear-gradient(90deg, #63e6be, #20c997);
+}
+
+.mini { font-size: 13px; line-height: 1.45; color: #495057; margin-top: 6px; }
+#log { font-size: 11px; max-height: 85px; overflow: auto; margin-top: 6px; background: #f1f3f5; padding: 6px; border-radius: 8px; }
+
+@media (orientation: portrait) {
+  body { overflow: auto; }
+  .app { height: auto; grid-template-columns: 1fr; }
+  .cam { height: 58vw; min-height: 220px; flex: none; }
+  aside { overflow: visible; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.0</span></h1>
+    <span class="chip">⭐ <span id="score">0</span>점</span>
+    <span class="chip timer" id="tchip">⏱ <span id="time">01:00</span></span>
+  </header>
+
+  <section class="play">
+    <div class="cam">
+      <div id="stage">
+        <video id="v" autoplay muted playsinline></video>
+        <canvas id="ov" width="960" height="540"></canvas>
+
+        <div class="hud-target" id="hudTgt">
+          <span>🎯 목표 음식:</span>
+          <span class="hud-dot" id="hudDot"></span>
+          <b id="hudName">빨강 🍎</b>
+        </div>
+
+        <div id="ph">
+          <div>
+            <span class="cam-icon">📷</span><br>
+            <b>‘카메라 켜기’</b>를 눌러 모험을 시작해요!<br>
+            <small style="opacity:0.85">태블릿·폰을 가로로 놓으면 더 잘 보여요</small>
+          </div>
+        </div>
+
+        <div id="end">
+          <div class="modal">
+            <h2>🏆 모험 완료!</h2>
+            <div id="stars"></div>
+            <p id="res"></p>
+            <button class="btn-play" id="again">🔄 한 번 더 하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bub" id="bub">
+      <div class="avatar">🐰</div>
+      <p id="msg">안녕! 나는 토끼 코치 콕콕이야. 카메라를 켜고 같이 젓가락 연습하자!</p>
+    </div>
+  </section>
+
+  <aside>
+    <button class="btn-cam" id="start">📷 카메라 켜기</button>
+
+    <div class="card">
+      <h3>🎮 놀이 설정</h3>
+      <select id="dur" aria-label="제한시간">
+        <option value="30">⏱ 30초 짧은 놀이</option>
+        <option value="60" selected>⏱ 1분 기본 놀이</option>
+        <option value="120">⏱ 2분 신나는 놀이</option>
+      </select>
+      <button class="btn-play" id="play" disabled>▶ 게임 시작!</button>
+      <div class="mini" id="vis">카메라를 켜면 색깔 장난감을 찾아줘요.</div>
+    </div>
+
+    <div class="card">
+      <h3>🥢 바른 젓가락 자세</h3>
+      <ul>
+        <li id="c1"><i>⭕</i>엄지·검지로 살짝 잡기</li>
+        <li id="c2"><i>⭕</i>가운뎃손가락으로 받치기</li>
+        <li id="c3"><i>⭕</i>약지·새끼손가락 접기</li>
+        <li id="c4"><i>⭕</i>젓가락 끝이 앞으로</li>
+      </ul>
+      <div class="bar" style="margin-top:8px"><div id="pbar"></div></div>
+      <div class="mini" id="pt">자세 점수 0 / 4</div>
+    </div>
+
+    <div class="card">
+      <h3>🚀 들어올리기 게이지</h3>
+      <div class="mini" id="st">대기 중</div>
+      <div class="bar mint" style="margin-top:6px"><div id="gbar"></div></div>
+    </div>
+
+    <div class="row">
+      <button id="voiceB">🔊 음성 켜짐</button>
+      <button id="mirrorB">🪞 좌우 반전</button>
+    </div>
+    <div class="row">
+      <button id="retry">🔄 AI 다시</button>
+      <button class="btn-stop" id="stop">⏹ 카메라 끄기</button>
+    </div>
+
+    <details class="card">
+      <summary style="cursor:pointer">⚙️ 선생님·부모님 안내</summary>
+      <label class="mini" style="display:block;margin-top:8px">
+        카메라-매트 높이 (cm)
+        <input id="mount" type="number" min="25" max="120" value="55" style="width:100%;margin-top:4px;padding:6px;border:2px solid var(--ink);border-radius:10px">
+      </label>
+      <div class="mini">
+        • 흰색 젓가락 교구를 어두운 무광 매트 위에서 비춰 주세요.<br>
+        • 전면 카메라 사용 시 [좌우 반전] 버튼을 누르면 거울처럼 편하게 볼 수 있어요.<br>
+        • 영상은 기기 내부에서만 분석되며 외부로 전송·저장되지 않아요.
+      </div>
+      <div id="log"></div>
+    </details>
+  </aside>
+</div>
+
+<script type="module">
+import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm';
+
+const $ = i => document.getElementById(i);
+const video = $('v'), cv = $('ov'), cx = cv.getContext('2d'), stage = $('stage');
+const wk = document.createElement('canvas'), wc = wk.getContext('2d', { willReadFrequently: true });
+
+const WASM_URLS = [
+  'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
+  'https://unpkg.com/@mediapipe/tasks-vision@0.10.14/wasm'
+];
+
+const COL = {
+  red:    ['빨강 🍎', '#ff5d5d'],
+  blue:   ['파랑 🫐', '#4aa3ff'],
+  green:  ['초록 🥦', '#3ccf7e'],
+  yellow: ['노랑 🍌', '#ffd23f'],
+  purple: ['보라 🍇', '#b57bff']
+};
+const KEYS = Object.keys(COL);
+
+let FW = 320, FH = 180, W = 960, H = 540;
+let mask, wl;
+let stream = null, det = null, aiBusy = false, running = false;
+let voiceOn = true, voiceOK = false, mirrorOn = false;
+let session = false, endAt = 0, dur = 60, score = 0, wins = 0;
+let target = 'red', lastWin = null, phase = 'READY';
+let base = 0, bf = 0, gc = 0, lf = 0, anchor = null, gripAt = 0, lastNear = 0, lostAt = 0, cool = 0;
+let hand = null, lastFrame = 0, lastSay = 0, lastKey = '', lastCoach = 0, coachIdx = 0;
+let nextPromptTimer = null;
+let vis = {};
+
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function log(s) {
+  const d = document.createElement('div');
+  d.textContent = new Date().toLocaleTimeString('ko-KR') + ' ' + s;
+  $('log').prepend(d);
+  while ($('log').childElementCount > 25) $('log').lastChild.remove();
+}
+
+window.addEventListener('error', e => log('오류: ' + e.message));
+window.addEventListener('unhandledrejection', e => log('오류: ' + (e.reason?.message || e.reason)));
+
+function msg(s, win) {
+  $('msg').textContent = s;
+  $('bub').className = 'bub' + (win ? ' win' : '');
+}
+
+function unlock() {
+  if (voiceOK || !('speechSynthesis' in window)) return;
+  voiceOK = true;
+  try { speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch {}
+}
+
+function say(t, key, urgent) {
+  msg(t, urgent && key === 'win');
+  if (!voiceOn || !voiceOK || !('speechSynthesis' in window)) return;
+  const n = Date.now();
+  if (!urgent && (n - lastSay < 4200 || speechSynthesis.speaking)) return;
+  if (!urgent && key === lastKey && n - lastSay < 12000) return;
+  try {
+    if (urgent) speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t.replace(/[\u{1F300}-\u{1FAFF}]/gu, ''));
+    u.lang = 'ko-KR';
+    u.rate = 1.02;
+    u.pitch = 1.18;
+    const ko = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('ko'));
+    if (ko) u.voice = ko;
+    speechSynthesis.speak(u);
+    lastSay = n;
+    lastKey = key;
+  } catch (e) {
+    log('음성 ' + e.message);
+  }
+}
+
+$('voiceB').onclick = () => {
+  unlock();
+  voiceOn = !voiceOn;
+  $('voiceB').textContent = voiceOn ? '🔊 음성 켜짐' : '🔇 음성 꺼짐';
+  if (voiceOn) say('좋아요! 같이 연습해요!', 't', true);
+};
+
+$('mirrorB').onclick = () => {
+  mirrorOn = !mirrorOn;
+  stage.classList.toggle('mirror', mirrorOn);
+  $('mirrorB').textContent = mirrorOn ? '🪞 반전 켜짐' : '🪞 좌우 반전';
+};
+
+function sizeStage() {
+  const r = stage.parentElement.getBoundingClientRect();
+  const q = W / H;
+  const w = Math.min(r.width, r.height * q);
+  stage.style.width = Math.max(1, w) + 'px';
+  stage.style.height = Math.max(1, w / q) + 'px';
+}
+
+function setup() {
+  W = video.videoWidth || 960;
+  H = video.videoHeight || 540;
+  cv.width = W;
+  cv.height = H;
+  FW = 320;
+  FH = Math.max(120, Math.round(320 * H / W));
+  wk.width = FW;
+  wk.height = FH;
+  mask = new Uint8Array(FW * FH);
+  wl = new Int32Array(FW * FH);
+  sizeStage();
+  log('영상 해상도: ' + W + '×' + H);
+}
+
+video.addEventListener('resize', () => { if (running) setup(); });
+window.addEventListener('resize', sizeStage);
+window.addEventListener('orientationchange', () => setTimeout(sizeStage, 300));
+
+function cls(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  if (mx < 65 || d < 42 || d / mx < 0.36) return;
+  let h = mx === r ? (60 * ((g - b) / d) + 360) % 360
+        : mx === g ? 60 * ((b - r) / d + 2)
+        : 60 * ((r - g) / d + 4);
+  if ((h >= 348 || h <= 14) && r > 125 && r - g > 60 && r - b > 55) return 'red';
+  if (h >= 190 && h <= 260 && b > 100) return 'blue';
+  if (h >= 72 && h <= 172 && g > 85) return 'green';
+  if (h >= 40 && h <= 70 && r > 125 && g > 105 && b < Math.min(r, g) * 0.72) return 'yellow';
+  if (h >= 261 && h <= 338 && b > 82) return 'purple';
+}
+
+function scan(d) {
+  mask.fill(0);
+  if (hand) {
+    const R = Math.max(6, Math.max(0.03, dist(hand[0], hand[9])) * FW * 0.42);
+    for (const p of hand) {
+      const px = p.x * FW, py = p.y * FH;
+      for (let y = Math.max(0, (py - R) | 0); y < Math.min(FH, py + R); y++) {
+        for (let x = Math.max(0, (px - R) | 0); x < Math.min(FW, px + R); x++) {
+          mask[y * FW + x] = 1;
+        }
+      }
+    }
+  }
+
+  const S = {};
+  for (const k of KEYS) S[k] = { n: 0, x: 0, y: 0 };
+  let wn = 0;
+
+  for (let y = 2; y < FH - 2; y++) {
+    for (let x = 2; x < FW - 2; x++) {
+      const i = y * FW + x;
+      if (mask[i]) continue;
+      const j = i * 4, r = d[j], g = d[j + 1], b = d[j + 2];
+      const mn = Math.min(r, g, b), mx = Math.max(r, g, b);
+      if (mn >= 165 && mx - mn <= 55 && mx >= 185) {
+        wl[wn++] = i;
+        continue;
+      }
+      const c = cls(r, g, b);
+      if (c) {
+        const s = S[c];
+        s.n++;
+        s.x += x;
+        s.y += y;
+      }
+    }
+  }
+
+  let tip = null;
+  if (wn >= 35 && hand) {
+    const ix = hand[8].x * FW, iy = hand[8].y * FH;
+    const wx = hand[0].x * FW, wy = hand[0].y * FH;
+    const maxR2 = (FW * 0.35) ** 2;
+    let bestScore = -1;
+    for (let k = 0; k < wn; k += 2) {
+      const x = wl[k] % FW, y = (wl[k] / FW) | 0;
+      const dIdx2 = (x - ix) ** 2 + (y - iy) ** 2;
+      if (dIdx2 > maxR2) continue;
+      const dWrist2 = (x - wx) ** 2 + (y - wy) ** 2;
+      if (dWrist2 > dIdx2 && dIdx2 > bestScore) {
+        bestScore = dIdx2;
+        tip = { x: x / FW, y: y / FH };
+      }
+    }
+  }
+  return { S, tip };
+}
+
+function pose(tip) {
+  const p = hand;
+  const pl = Math.max(0.03, dist(p[0], p[9]));
+  const m = dist(p[12], p[0]);
+  return [
+    dist(p[4], p[8]) / pl < 1.05,
+    dist(p[8], p[12]) / pl < 0.85,
+    dist(p[16], p[0]) < m * 0.95 && dist(p[20], p[0]) < m * 0.95,
+    !!tip && dist(tip, p[0]) > dist(p[8], p[0]) * 1.05
+  ];
+}
+
+const TIPS = [
+  '엄지와 검지로 젓가락을 살짝 잡아 볼까요?',
+  '가운뎃손가락을 검지 옆에 붙여 받쳐 주세요.',
+  '약지와 새끼손가락은 안쪽으로 살짝 접어요.',
+  '젓가락 끝이 손가락보다 앞으로 나오게 잡아요!'
+];
+const PRAISE = [
+  '와, 자세가 멋져요! 이제 음식을 콕!',
+  '좋아요! 손에 힘을 빼고 천천히 해요.',
+  '젓가락 박사님 같아요! 계속 해 봐요.'
+];
+
+function coach(tip, t) {
+  if (!hand) {
+    $('pt').textContent = '손을 화면에 보여 주세요';
+    if (t - lastCoach > 6500 && !session) {
+      lastCoach = t;
+      say('손을 카메라에 보여 주세요!', 'nohand');
+    }
+    return;
+  }
+  const ok = pose(tip);
+  ok.forEach((v, i) => {
+    const e = $('c' + (i + 1));
+    e.className = v ? 'ok' : '';
+    e.firstChild.textContent = v ? '✅' : '⭕';
+  });
+  const n = ok.filter(Boolean).length;
+  $('pbar').style.width = (n * 25) + '%';
+  $('pt').textContent = '자세 점수 ' + n + ' / 4';
+
+  if (t - lastCoach > 5200) {
+    lastCoach = t;
+    const bad = ok.indexOf(false);
+    if (bad < 0) say(PRAISE[coachIdx++ % 3], 'good');
+    else say(TIPS[bad], 'tip' + bad);
+  }
+}
+
+function pickTarget() {
+  const c = KEYS.filter(k => k !== lastWin);
+  const seen = c.filter(k => vis[k]);
+  const i = KEYS.indexOf(lastWin);
+  const ord = KEYS.slice(i + 1).concat(KEYS.slice(0, i + 1));
+  target = ord.find(k => seen.includes(k)) || ord.find(k => k !== lastWin) || 'red';
+  showTarget();
+}
+
+function showTarget() {
+  $('hudName').textContent = COL[target][0];
+  $('hudDot').style.background = COL[target][1];
+}
+
+function resetRound() {
+  phase = 'READY';
+  base = 0; bf = 0; gc = 0; lf = 0;
+  anchor = null;
+  $('gbar').style.width = '0%';
+}
+
+function win() {
+  if (!session || cool > performance.now()) return;
+  cool = performance.now() + 1400;
+  wins++;
+  score = wins * 10;
+  lastWin = target;
+  $('score').textContent = score;
+  $('gbar').style.width = '100%';
+  say('와아! 성공이에요! 별 10점 획득! ⭐', 'win', true);
+  resetRound();
+  pickTarget();
+
+  if (nextPromptTimer) clearTimeout(nextPromptTimer);
+  nextPromptTimer = setTimeout(() => {
+    if (session) say('다음은 ' + COL[target][0] + ' 음식을 집어 볼까요?', 'next');
+  }, 2300);
+}
+
+function update(t) {
+  hand = det?.detectForVideo(video, t)?.landmarks?.[0] || null;
+  wc.drawImage(video, 0, 0, FW, FH);
+  const { S, tip } = scan(wc.getImageData(0, 0, FW, FH).data);
+
+  for (const k of KEYS) vis[k] = S[k].n >= 32;
+  const vn = KEYS.filter(k => vis[k]).map(k => COL[k][0]);
+  $('vis').textContent = vn.length ? '보이는 음식: ' + vn.join(' · ') : '색깔 장난감을 매트 위에 놓아 주세요';
+
+  const s = S[target];
+  const food = s.n >= 26 ? { x: s.x / s.n / FW, y: s.y / s.n / FH, n: s.n, r: Math.sqrt(s.n / Math.PI) / FW } : null;
+  const near = !!(tip && food && dist(tip, food) < Math.max(0.11, food.r * 4.2));
+  if (near) lastNear = t;
+
+  coach(tip, t);
+
+  if (session) {
+    if (phase === 'READY') {
+      if (food && !near) {
+        base = base ? base * 0.85 + food.n * 0.15 : food.n;
+        bf++;
+      }
+      if (food && near && bf >= 3) {
+        gc++;
+        if (gc >= 4) {
+          phase = 'GRIP';
+          anchor = { x: food.x, y: food.y };
+          gripAt = t;
+          lf = 0;
+          lostAt = 0;
+          say('좋아요! 이제 위로 쏙 들어 올려 봐요!', 'grip', true);
+        }
+      } else {
+        gc = Math.max(0, gc - 1);
+      }
+      $('st').textContent = food ? (near ? '🥢 집는 중… 조금만 더!' : '젓가락 끝을 음식에 가까이!') : COL[target][0] + ' 음식을 보여 주세요';
+      $('gbar').style.width = Math.min(100, gc * 25) + '%';
+    } else if (phase === 'GRIP') {
+      if (!food) {
+        if (!lostAt) lostAt = t;
+        if (t - lostAt > 3000) {
+          resetRound();
+          say('앗, 음식이 안 보여요. 다시 해 봐요!', 'retry', true);
+        }
+        $('st').textContent = '음식이 손에 가려졌어요';
+      } else {
+        lostAt = 0;
+        const mountCm = Math.min(120, Math.max(25, +$('mount').value || 55));
+        const sc = Math.sqrt(food.n / Math.max(8, base));
+        const hArea = Math.min(35, Math.max(0, mountCm * (1 - 1 / Math.max(0.3, sc))));
+        const liftY = Math.max(0, anchor.y - food.y);
+        const hVert = liftY * mountCm * 1.4;
+        const h = Math.max(hArea, hVert);
+
+        const ok = (t - lastNear < 1800) && (dist(food, anchor) < 0.22) && (h >= 4.5);
+        lf = ok ? lf + 1 : Math.max(0, lf - 1);
+        $('st').textContent = '들어 올린 높이 약 ' + h.toFixed(1) + 'cm';
+        $('gbar').style.width = Math.min(100, Math.round((h / 4.5) * 60 + lf * 8)) + '%';
+        if (lf >= 5) win();
+      }
+      if (phase === 'GRIP' && t - gripAt > 9500) {
+        resetRound();
+        say('괜찮아요, 다시 한 번 도전해 봐요!', 'retry', true);
+      }
+    }
+  } else {
+    $('st').textContent = running ? '연습 모드 · 게임 시작을 눌러요!' : '대기 중';
+  }
+
+  cx.clearRect(0, 0, W, H);
+
+  if (food) {
+    const fx = food.x * W, fy = food.y * H, fr = Math.max(22, food.r * W * 1.3);
+    cx.save();
+    cx.strokeStyle = '#ffffff';
+    cx.lineWidth = 9;
+    cx.beginPath();
+    cx.arc(fx, fy, fr, 0, Math.PI * 2);
+    cx.stroke();
+
+    cx.strokeStyle = COL[target][1];
+    cx.lineWidth = 5;
+    cx.beginPath();
+    cx.arc(fx, fy, fr, 0, Math.PI * 2);
+    cx.stroke();
+    cx.restore();
+  }
+
+  if (tip) {
+    const tx = tip.x * W, ty = tip.y * H;
+    cx.save();
+    cx.fillStyle = near ? '#38d9a9' : '#ffffff';
+    cx.strokeStyle = '#25304c';
+    cx.lineWidth = 4;
+    cx.beginPath();
+    cx.arc(tx, ty, near ? 14 : 11, 0, Math.PI * 2);
+    cx.fill();
+    cx.stroke();
+    cx.restore();
+  }
+
+  if (hand) {
+    cx.save();
+    cx.fillStyle = '#ffd43b';
+    cx.strokeStyle = '#25304c';
+    cx.lineWidth = 2;
+    for (const p of hand) {
+      cx.beginPath();
+      cx.arc(p.x * W, p.y * H, 4.5, 0, Math.PI * 2);
+      cx.fill();
+      cx.stroke();
+    }
+    cx.restore();
+  }
+}
+
+const fmt = s => {
+  s = Math.max(0, Math.ceil(s));
+  return String((s / 60) | 0).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+};
+
+function loop(t) {
+  if (!running) return;
+  if (session) {
+    const rem = (endAt - performance.now()) / 1000;
+    $('time').textContent = fmt(rem);
+    $('tchip').classList.toggle('urgent', rem <= 10);
+    if (rem <= 0) finish();
+  }
+  if (video.readyState >= 2 && t - lastFrame >= 100) {
+    lastFrame = t;
+    try { update(t); } catch (e) { log('분석 오류: ' + e.message); }
+  }
+  requestAnimationFrame(loop);
+}
+
+function begin() {
+  unlock();
+  if (!running || !det) {
+    msg('카메라와 AI가 준비되면 시작할 수 있어요!');
+    return;
+  }
+  if (nextPromptTimer) clearTimeout(nextPromptTimer);
+  dur = +$('dur').value || 60;
+  wins = 0;
+  score = 0;
+  lastWin = null;
+  $('score').textContent = 0;
+  $('tchip').classList.remove('urgent');
+  $('end').classList.remove('show');
+  session = true;
+  endAt = performance.now() + dur * 1000;
+  resetRound();
+  pickTarget();
+  $('play').disabled = true;
+  say('출발! ' + COL[target][0] + ' 음식을 젓가락으로 집어 올려요!', 'go', true);
+}
+
+function finish() {
+  session = false;
+  if (nextPromptTimer) clearTimeout(nextPromptTimer);
+  $('play').disabled = false;
+  $('time').textContent = fmt(dur);
+  $('tchip').classList.remove('urgent');
+  const st = Math.min(5, Math.max(1, wins));
+  $('stars').textContent = '⭐'.repeat(wins ? st : 0) + '☆'.repeat(5 - (wins ? st : 0));
+  $('res').textContent = '성공 ' + wins + '번 · 총 ' + score + '점!';
+  $('end').classList.add('show');
+  say('시간 끝! ' + wins + '번이나 성공했어요. 정말 최고예요!', 'end', true);
+}
+
+$('play').onclick = begin;
+$('again').onclick = begin;
+$('dur').onchange = () => { $('time').textContent = fmt(+$('dur').value); };
+
+async function initAI() {
+  if (det && det.close) { try { det.close(); } catch {} }
+  det = null;
+  if (aiBusy) return;
+  aiBusy = true;
+  $('retry').disabled = true;
+  try {
+    let vision, err;
+    msg('AI 친구 콕콕이를 깨우는 중이에요… 🐰');
+    for (const wasmUrl of WASM_URLS) {
+      try {
+        vision = await Promise.race([
+          FilesetResolver.forVisionTasks(wasmUrl),
+          new Promise((_, rej) => setTimeout(() => rej(Error('WASM 로딩 시간 초과')), 18000))
+        ]);
+        break;
+      } catch (e) {
+        err = e;
+        log('WASM 재시도: ' + e.message);
+      }
+    }
+    if (!vision) throw err;
+
+    det = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+        delegate: 'CPU'
+      },
+      runningMode: 'VIDEO',
+      numHands: 1,
+      minHandDetectionConfidence: 0.55,
+      minTrackingConfidence: 0.55
+    });
+
+    if (!running) return;
+    $('play').disabled = session;
+    say('준비 완료! 손을 보여 주면 젓가락 자세를 알려 줄게요!', 'ready', true);
+    log('AI 모델 준비 완료');
+  } catch (e) {
+    msg('AI를 불러오지 못했어요. [AI 다시] 버튼을 눌러 주세요.');
+    log('AI 오류: ' + e.message);
+  } finally {
+    aiBusy = false;
+    $('retry').disabled = false;
+  }
+}
+
+$('retry').onclick = () => {
+  if (!stream) { msg('먼저 카메라를 켜 주세요!'); return; }
+  initAI();
+};
+
+$('start').onclick = async () => {
+  unlock();
+  if (stream) return;
+  $('start').disabled = true;
+  try {
+    if (!isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      throw Error('보안 연결(HTTPS 또는 localhost)에서 열어 주세요');
+    }
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    video.srcObject = stream;
+    await video.play();
+    running = true;
+    setup();
+    stage.classList.add('on');
+    showTarget();
+    requestAnimationFrame(loop);
+    initAI();
+  } catch (e) {
+    msg('카메라 오류: ' + e.message);
+    log(e.message);
+    stream?.getTracks().forEach(t => t.stop());
+    stream = null;
+    $('start').disabled = false;
+  }
+};
+
+$('stop').onclick = () => {
+  session = false;
+  running = false;
+  if (nextPromptTimer) clearTimeout(nextPromptTimer);
+  stream?.getTracks().forEach(t => t.stop());
+  stream = null;
+  video.srcObject = null;
+  stage.classList.remove('on');
+  $('start').disabled = false;
+  $('play').disabled = true;
+  $('end').classList.remove('show');
+  $('tchip').classList.remove('urgent');
+  cx.clearRect(0, 0, W, H);
+  speechSynthesis?.cancel();
+  msg('카메라를 껐어요. 다음에 또 만나요! 👋');
+};
+
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+showTarget();
+sizeStage();
+</script>
+</body>
+</html>
