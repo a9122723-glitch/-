@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#72c6ff">
-<title>🐰 콕콕 젓가락 대모험 v1.5</title>
+<title>🐰 콕콕 젓가락 대모험 v1.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -575,7 +575,7 @@ li.ok {
 <body>
 <div class="app">
   <header>
-    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.5</span></h1>
+    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.6</span></h1>
     <div class="header-chips">
       <span class="chip">⭐ <span id="score">0</span>점</span>
       <span class="chip timer" id="tchip">⏱ <span id="time">01:00</span></span>
@@ -686,7 +686,7 @@ li.ok {
       </label>
       <div class="mini">
         • 미션 출제 시 화면 배너와 자연스러운 한국 여성 음성으로 동시에 안내합니다.<br>
-        • 색깔별 성공 시 <b>“파란색 음식 성공!”</b>, <b>“빨간색 음식 성공!”</b> 칭찬 후 2초 뒤에 다음 미션이 이어집니다.<br>
+        • 색깔별 성공 시 <b>“파란색 음식 성공!”</b>, <b>“빨간색 음식 성공!”</b> 칭찬 후 4초 뒤에 다음 미션이 이어집니다.<br>
         • 영상은 기기 내부에서만 분석되며 외부로 전송·저장되지 않아요.
       </div>
       <div id="log"></div>
@@ -1272,7 +1272,7 @@ function updateAndDrawFireworks() {
 // [성공 판정 처리] 색상별 성공 코멘트 출력 후 2초(2000ms) 동안 지연 뒤 다음 색상 미션 진행
 function win(fxPoint) {
   if (!session || phase === 'CELEBRATE' || cool > performance.now()) return;
-  cool = performance.now() + 2100;
+  cool = performance.now() + 4100;
   phase = 'CELEBRATE';
   wins++;
   score = wins * 10;
@@ -1290,7 +1290,7 @@ function win(fxPoint) {
   const winSpoken = `${colorName} 음식 성공! 우와, 정말 잘했어요!`;
 
   // 성공 배너를 정확히 2초 동안 유지
-  showCallout(succeededColor, '참 잘했어요! ⭐ +10점', winHeadline, true, 2000);
+  showCallout(succeededColor, '참 잘했어요! ⭐ +10점', winHeadline, true, 4000);
   say(winSpoken, 'win', true);
 
   if (nextPromptTimer) clearTimeout(nextPromptTimer);
@@ -1304,7 +1304,7 @@ function win(fxPoint) {
       showCallout(null, '음식을 찾고 있어요', '매트 위에 색깔 음식을 놓아 주세요!', false, 3000);
       say('매트 위에 색깔 음식을 올려 주시면 바로 다음 미션을 알려 드릴게요.', 'needfood', true);
     }
-  }, 2000);
+  }, 4000);
 }
 
 function renderDetectedPills(visibleKeys) {
@@ -1353,7 +1353,7 @@ function update(t) {
 
   if (session) {
     if (phase === 'CELEBRATE') {
-      // 2초 지연 대기 중에는 게이지 100% 상태 유지
+      // 4초 지연 대기 중에는 게이지 100% 상태 유지
       setGauge(100, '🎉 성공! 다음 미션을 준비하고 있어요…');
     } else if (!target || (!food && phase === 'READY')) {
       setGauge(0, '매트 위에 색깔 음식을 놓아 주세요');
@@ -1563,7 +1563,7 @@ function finish() {
   $('stars').textContent = '⭐'.repeat(wins ? st : 0) + '☆'.repeat(5 - (wins ? st : 0));
   $('res').textContent = '성공 ' + wins + '번 · 총 ' + score + '점!';
   $('end').classList.add('show');
-  say(`우와, 시간이 다 되었어요! 오늘 ${wins}번이나 성공했네요, 정말 대단해요!`, 'end', true);
+  say(`우와, 시간이 다 되었어요! 오늘 모두 ${wins}번 성공해서 총 ${score}점을 획득했어요! 정말 대단해요!`, 'end', true);
 }
 
 $('play').onclick = begin;
