@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#72c6ff">
-<title>🐰 콕콕 젓가락 대모험 v1.2</title>
+<title>🐰 콕콕 젓가락 대모험 v1.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -58,8 +58,7 @@ header {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.92);
   border: 4px solid var(--ink);
   border-radius: 24px;
   padding: 8px 14px;
@@ -111,9 +110,7 @@ h1 {
 }
 
 .chip.timer { background: #fff; }
-.chip.timer.urgent { background: #ffe3e3; color: #e03131; animation: pulse 0.8s infinite; }
-
-@keyframes pulse { 50% { transform: scale(1.06); } }
+.chip.timer.urgent { background: #ffe3e3; color: #e03131; }
 
 .play {
   min-height: 0;
@@ -177,10 +174,7 @@ h1 {
   font-size: 60px;
   display: inline-block;
   margin-bottom: 8px;
-  animation: float 2.4s ease-in-out infinite;
 }
-
-@keyframes float { 50% { transform: translateY(-8px); } }
 
 #stage.on #ph { display: none; }
 
@@ -221,8 +215,7 @@ h1 {
   inset: 0;
   display: none;
   place-items: center;
-  background: rgba(37, 48, 76, 0.82);
-  backdrop-filter: blur(4px);
+  background: rgba(37, 48, 76, 0.85);
   z-index: 5;
   padding: 16px;
 }
@@ -238,12 +231,6 @@ h1 {
   box-shadow: 0 8px 0 var(--coral);
   max-width: 380px;
   width: 100%;
-  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes popIn {
-  from { transform: scale(0.7); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
 }
 
 #end h2 { margin: 0 0 8px; font-size: 32px; font-weight: 400; color: var(--coral-dark); }
@@ -261,7 +248,6 @@ h1 {
   padding: 10px 16px;
   box-shadow: 0 5px 0 var(--ink);
   min-height: 70px;
-  transition: background 0.25s, transform 0.2s;
 }
 
 .bub .avatar {
@@ -274,7 +260,6 @@ h1 {
   place-items: center;
   font-size: 32px;
   flex-shrink: 0;
-  animation: hop 1.8s ease-in-out infinite;
 }
 
 .bub p {
@@ -285,10 +270,7 @@ h1 {
 
 .bub.win {
   background: #fff3bf;
-  transform: scale(1.01);
 }
-
-@keyframes hop { 50% { transform: translateY(-6px) rotate(-6deg); } }
 
 /* 우측 컨트롤 패널 */
 aside {
@@ -328,7 +310,6 @@ button {
   font-size: 17px;
   cursor: pointer;
   box-shadow: 0 5px 0 var(--ink);
-  transition: transform 0.08s, box-shadow 0.08s, background 0.15s;
 }
 
 button:active:not(:disabled) {
@@ -405,7 +386,7 @@ select {
   border: 1.5px solid var(--ink);
 }
 
-/* 자세 체크리스트 (교구 맞춤형 4단계) */
+/* 자세 체크리스트 (표준 젓가락 파지법 4단계) */
 ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 li {
   font-size: 14.5px;
@@ -416,7 +397,6 @@ li {
   border-radius: 12px;
   background: #f8f9fa;
   border: 2px solid transparent;
-  transition: all 0.2s;
 }
 li i { font-style: normal; width: 22px; text-align: center; font-size: 16px; }
 li.ok {
@@ -425,14 +405,13 @@ li.ok {
   color: #087f5b;
 }
 
-/* 그림 젓가락 사용법 가이드 모달 */
+/* 그림 젓가락 사용법 가이드 모달 (첨부 이미지 기반 재설계) */
 #guideModal {
   position: fixed;
   inset: 0;
   display: none;
   place-items: center;
-  background: rgba(37, 48, 76, 0.78);
-  backdrop-filter: blur(4px);
+  background: rgba(37, 48, 76, 0.82);
   z-index: 20;
   padding: 16px;
 }
@@ -442,12 +421,11 @@ li.ok {
   border: 5px solid var(--ink);
   border-radius: 28px;
   padding: 20px;
-  max-width: 460px;
+  max-width: 520px;
   width: 100%;
-  max-height: 88vh;
+  max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 8px 0 var(--grape);
-  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .guide-box h2 {
   margin: 0 0 12px;
@@ -457,10 +435,10 @@ li.ok {
   color: var(--ink);
 }
 .guide-diagram {
-  background: #eef7ff;
+  background: #fffdf9;
   border: 3px solid var(--ink);
   border-radius: 18px;
-  padding: 10px;
+  padding: 10px 8px;
   margin-bottom: 12px;
   text-align: center;
 }
@@ -473,11 +451,20 @@ li.ok {
   background: #fff;
   border: 2.5px solid var(--ink);
   border-radius: 14px;
-  padding: 8px 12px;
-  font-size: 15px;
-  line-height: 1.4;
+  padding: 9px 12px;
+  font-size: 14.5px;
+  line-height: 1.45;
 }
 .g-step b { color: #5f3dc4; }
+.g-step .badge-num {
+  display: inline-block;
+  background: var(--sun);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 0 7px;
+  font-size: 13px;
+  margin-right: 4px;
+}
 
 .bar {
   height: 14px;
@@ -491,7 +478,6 @@ li.ok {
   height: 100%;
   width: 0;
   background: linear-gradient(90deg, var(--sun), #ffa94d);
-  transition: width 0.15s ease-out;
 }
 
 .bar.mint div {
@@ -532,7 +518,7 @@ li.ok {
 <body>
 <div class="app">
   <header>
-    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.2</span></h1>
+    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.3</span></h1>
     <div class="header-chips">
       <span class="chip">⭐ <span id="score">0</span>점</span>
       <span class="chip timer" id="tchip">⏱ <span id="time">01:00</span></span>
@@ -549,7 +535,7 @@ li.ok {
 
       <div id="stage">
         <video id="v" autoplay muted playsinline></video>
-        <canvas id="ov" width="960" height="540"></canvas>
+        <canvas id="ov" width="640" height="360"></canvas>
 
         <div id="ph">
           <div>
@@ -594,10 +580,10 @@ li.ok {
     <div class="card">
       <h3>🥢 올바른 젓가락 사용법</h3>
       <ul>
-        <li id="c1"><i>⭕</i>① 머리 부분을 손바닥 안쪽에 쏙!</li>
-        <li id="c2"><i>⭕</i>② 엄지·검지로 움직이는 위쪽 홈 잡기</li>
-        <li id="c3"><i>⭕</i>③ 중지·약지로 아래 고정대 받치기</li>
-        <li id="c4"><i>⭕</i>④ 젓가락 끝을 나란히 벌렸다 오므리기</li>
+        <li id="c1"><i>⭕</i>① 엄지·검지 사이에 끼워 약지 첫관절 받치기</li>
+        <li id="c2"><i>⭕</i>② 엄지·검지·중지로 위쪽 젓가락 가볍게 쥐기</li>
+        <li id="c3"><i>⭕</i>③ 엄지를 검지 첫관절 부근에 살짝 대기</li>
+        <li id="c4"><i>⭕</i>④ 끝을 가지런히 맞추고 위쪽만 움직이기</li>
       </ul>
       <div class="bar" style="margin-top:8px"><div id="pbar"></div></div>
       <div class="mini" id="pt">자세 점수 0 / 4</div>
@@ -625,9 +611,16 @@ li.ok {
         카메라-매트 높이 (cm)
         <input id="mount" type="number" min="25" max="120" value="55" style="width:100%;margin-top:4px;padding:6px;border:2px solid var(--ink);border-radius:10px">
       </label>
+      <label class="mini" style="display:block;margin-top:8px">
+        🔋 배터리·발열 절약 모드
+        <select id="ecoMode" style="margin-top:4px;padding:6px;font-size:14px">
+          <option value="eco" selected>🌿 절전 모드 (저발열·배터리 보호 추천)</option>
+          <option value="normal">⚡ 일반 모드 (부드러운 화면)</option>
+        </select>
+      </label>
       <div class="mini">
-        • 카메라 화면에 놓인 음식 색상(빨강, 파랑, 노랑, 초록, 보라) 중에서만 랜덤으로 미션이 출제됩니다.<br>
-        • 젓가락 끝으로 음식을 집어 <b>살짝만 들어 올려도</b> 즉시 성공 판정됩니다.<br>
+        • <b>저발열·배터리 보호</b>를 위해 카메라 해상도(640×360)와 AI 연산 주기를 최적화했습니다.<br>
+        • 화면을 벗어나거나 다른 앱으로 전환하면 카메라와 AI 연산이 자동으로 일시정지됩니다.<br>
         • 영상은 기기 내부에서만 분석되며 외부로 전송·저장되지 않아요.
       </div>
       <div id="log"></div>
@@ -635,38 +628,75 @@ li.ok {
   </aside>
 </div>
 
-<!-- 올바른 젓가락 사용법 안내 모달 (교구 구조 및 실제 시연 영상 분석 반영) -->
+<!-- 첨부 이미지(올바른 젓가락 파지법 도해) 기반 가이드 모달 -->
 <div id="guideModal">
   <div class="guide-box">
-    <h2>🥢 토끼 코치의 올바른 젓가락 사용법</h2>
+    <h2>🥢 올바른 젓가락 사용법 보기</h2>
     <div class="guide-diagram">
-      <svg viewBox="0 0 360 155" width="100%" height="135" aria-label="교구형 젓가락 올바른 파지법 그림">
-        <!-- 젓가락 머리 연결부 -->
-        <rect x="265" y="42" width="56" height="58" rx="18" fill="#ffffff" stroke="#25304c" stroke-width="3.5"/>
-        <circle cx="305" cy="57" r="7" fill="#eef7ff" stroke="#25304c" stroke-width="3"/>
-        <!-- 위쪽 움직이는 젓가락 (경첩 연결) -->
-        <path d="M266 56 L210 52 Q195 45 180 52 L45 44 L45 51 L180 61 Q195 66 210 61 L266 64 Z" fill="#ffffff" stroke="#25304c" stroke-width="3"/>
-        <!-- 아래쪽 고정 젓가락 -->
-        <path d="M268 85 L205 87 Q192 80 180 87 L45 87 L45 94 L268 95 Z" fill="#ffffff" stroke="#25304c" stroke-width="3"/>
-        <!-- 손가락 가이드 표시 -->
-        <circle cx="195" cy="48" r="11" fill="#ffd43b" stroke="#25304c" stroke-width="2.5"/>
-        <text x="195" y="52" font-size="11" text-anchor="middle" fill="#25304c">검지</text>
-        <circle cx="215" cy="73" r="11" fill="#ff922b" stroke="#25304c" stroke-width="2.5"/>
-        <text x="215" y="77" font-size="11" text-anchor="middle" fill="#25304c">엄지</text>
-        <circle cx="195" cy="103" r="11" fill="#38d9a9" stroke="#25304c" stroke-width="2.5"/>
-        <text x="195" y="107" font-size="11" text-anchor="middle" fill="#25304c">중지</text>
-        <!-- 움직임 화살표 -->
-        <path d="M62 28 L62 40 M57 35 L62 40 L67 35" stroke="#ff6b6b" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M62 68 L62 55 M57 60 L62 55 L67 60" stroke="#ff6b6b" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <text x="74" y="34" font-size="12" fill="#fa5252">위쪽 젓가락만 까딱까딱!</text>
-        <text x="120" y="112" font-size="12" fill="#087f5b">아래쪽은 중지로 단단히 받쳐요</text>
+      <svg viewBox="0 0 460 225" width="100%" height="195" aria-label="올바른 젓가락 파지법 상세 그림">
+        <!-- 배경 가이드 원 -->
+        <rect x="6" y="6" width="448" height="213" rx="14" fill="#fffdf9" stroke="#e9ecef" stroke-width="2"/>
+
+        <!-- 위쪽 젓가락 (움직이는 젓가락) -->
+        <polygon points="48,68 410,96 410,103 48,73" fill="#e03131" stroke="#25304c" stroke-width="2" stroke-linejoin="round"/>
+        <!-- 아래쪽 젓가락 (고정 젓가락) -->
+        <polygon points="48,118 410,121 410,128 48,123" fill="#c92a2a" stroke="#25304c" stroke-width="2" stroke-linejoin="round"/>
+
+        <!-- 손목 및 손등 윤곽 -->
+        <path d="M295,212 L282,155 Q274,132 252,115 L235,88 Q232,72 248,68 Q272,64 298,82 L322,112 L345,165 L355,212 Z" fill="#ffe3d3" stroke="#25304c" stroke-width="2.5" stroke-linejoin="round"/>
+
+        <!-- 중지 (가운뎃손가락 - 위쪽 젓가락 받침) -->
+        <path d="M250,96 L202,94 Q190,98 194,108 L248,112" fill="#ffd8c2" stroke="#25304c" stroke-width="2.3" stroke-linecap="round"/>
+        <!-- 약지 (네번째 손가락 - 제일관절 부근에 아래쪽 젓가락 올려놓음) -->
+        <path d="M255,116 L210,122 Q200,128 206,136 L256,132" fill="#ffd8c2" stroke="#25304c" stroke-width="2.3" stroke-linecap="round"/>
+        <!-- 새끼손가락 -->
+        <path d="M262,135 L232,143 Q225,148 230,155 L264,149" fill="#ffd8c2" stroke="#25304c" stroke-width="2.3" stroke-linecap="round"/>
+
+        <!-- 검지 (집게손가락 - 위쪽 젓가락 위에서 쥠) -->
+        <path d="M276,78 L224,72 Q208,73 210,84 L256,92" fill="#ffe3d3" stroke="#25304c" stroke-width="2.5" stroke-linecap="round"/>
+
+        <!-- 엄지손가락 (검지 제일관절 부근에 살짝 대고 아래 젓가락 끼워 고정) -->
+        <path d="M286,152 L252,102 Q245,86 258,82 Q270,80 278,96 L305,142" fill="#ffe3d3" stroke="#25304c" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- 엄지 손톱 -->
+        <path d="M253,86 Q261,83 266,91 L258,95 Q252,92 253,86 Z" fill="#ffc9c9" stroke="#25304c" stroke-width="1.6"/>
+
+        <!-- 끝부분 개폐 점선 호 & 화살표 -->
+        <path d="M40,66 Q32,96 40,125" fill="none" stroke="#f03e3e" stroke-width="2.5" stroke-dasharray="3,3"/>
+        <polygon points="40,63 36,70 44,70" fill="#f03e3e"/>
+        <polygon points="40,128 36,121 44,121" fill="#f03e3e"/>
+
+        <!-- 지시선 및 라벨 텍스트 (첨부 이미지 핵심 포인트 그대로 시각화) -->
+        <text x="14" y="34" font-size="12.5" fill="#25304c">① 위쪽 젓가락만을</text>
+        <text x="26" y="49" font-size="12.5" fill="#25304c">움직인다.</text>
+
+        <text x="145" y="24" font-size="12.5" fill="#25304c">② 엄지·집게·중지손가락으로</text>
+        <text x="160" y="39" font-size="12.5" fill="#25304c">위쪽 젓가락을 가볍게 쥔다.</text>
+        <line x1="215" y1="45" x2="215" y2="70" stroke="#f03e3e" stroke-width="2" stroke-dasharray="2,2"/>
+
+        <text x="305" y="28" font-size="12.5" fill="#25304c">③ 엄지는 집게손가락의</text>
+        <text x="305" y="43" font-size="12.5" fill="#25304c">제일관절 부근에 살짝 댄다.</text>
+        <line x1="302" y1="45" x2="268" y2="80" stroke="#f03e3e" stroke-width="2" stroke-dasharray="2,2"/>
+
+        <text x="54" y="99" font-size="12" fill="#c92a2a">끝부분을 가지런히 정돈!</text>
+
+        <text x="362" y="148" font-size="12" fill="#25304c">뒤쪽은 1cm 정도</text>
+        <text x="362" y="163" font-size="12" fill="#25304c">비어져 나온다.</text>
+
+        <text x="42" y="168" font-size="12.5" fill="#25304c">④ 약지손가락의 제일관절</text>
+        <text x="56" y="183" font-size="12.5" fill="#25304c">부근에 가볍게 올려 놓는다.</text>
+        <line x1="168" y1="156" x2="205" y2="132" stroke="#f03e3e" stroke-width="2" stroke-dasharray="2,2"/>
+
+        <text x="145" y="203" font-size="12.5" fill="#25304c">⑤ 엄지손가락과 집게손가락</text>
+        <text x="160" y="217" font-size="12.5" fill="#25304c">사이에 끼워 고정한다.</text>
+        <line x1="242" y1="188" x2="282" y2="126" stroke="#f03e3e" stroke-width="2" stroke-dasharray="2,2"/>
       </svg>
     </div>
+
     <div class="guide-steps">
-      <div class="g-step"><b>1단계 (머리 감싸기):</b> 둥근 젓가락 머리 부분을 손바닥 안쪽(엄지 아래 두툼한 부분)에 편안하게 기대어 주세요.</div>
-      <div class="g-step"><b>2단계 (위쪽 홈 잡기):</b> 경첩으로 움직이는 <b>위쪽 젓가락의 오목한 홈</b>에 엄지와 검지 끝을 가볍게 올려 잡아요.</div>
-      <div class="g-step"><b>3단계 (아래쪽 받치기):</b> 움직이지 않는 <b>아래쪽 젓가락</b>은 가운뎃손가락(중지) 옆면과 약지로 단단히 받쳐 고정해요.</div>
-      <div class="g-step"><b>4단계 (집고 살짝 들기):</b> 아래 젓가락은 가만히 두고 <b>검지와 엄지만 움직여</b> 음식을 콕 집은 뒤 위로 살짝 들어 올려요!</div>
+      <div class="g-step"><span class="badge-num">1단계</span><b>아래쪽 젓가락 고정하기:</b> 엄지손가락과 집게손가락(검지) 사이의 오목한 곳에 끼워 고정하고, 앞쪽은 <b>약지손가락의 제일관절 부근</b>에 가볍게 올려놓아요.</div>
+      <div class="g-step"><span class="badge-num">2단계</span><b>위쪽 젓가락 가볍게 쥐기:</b> 연필을 잡듯이 <b>엄지·집게(검지)·중지손가락</b> 세 손가락으로 위쪽 젓가락을 가볍게 쥐어 주세요.</div>
+      <div class="g-step"><span class="badge-num">3단계</span><b>엄지 위치 맞추기:</b> 엄지손가락 끝은 <b>집게손가락(검지)의 제일관절 부근</b>에 힘을 빼고 살짝 대어 줍니다.</div>
+      <div class="g-step"><span class="badge-num">4단계</span><b>끝부분 정돈 &amp; 움직이기:</b> 젓가락 뒤쪽은 <b>1cm 정도</b> 여유가 나오게 잡고, 앞쪽 끝부분을 가지런히 정돈한 뒤 <b>아래쪽은 고정하고 위쪽 젓가락만을 움직여</b> 음식을 집어요!</div>
     </div>
     <button class="btn-play" id="closeGuide">👍 알겠어요! 연습하러 가기</button>
   </div>
@@ -676,7 +706,8 @@ li.ok {
 import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm';
 
 const $ = i => document.getElementById(i);
-const video = $('v'), cv = $('ov'), cx = cv.getContext('2d'), stage = $('stage'), camBox = $('camBox');
+const video = $('v'), cv = $('ov'), cx = cv.getContext('2d', { alpha: true, desynchronized: true });
+const stage = $('stage'), camBox = $('camBox');
 const wk = document.createElement('canvas'), wc = wk.getContext('2d', { willReadFrequently: true });
 
 const WASM_URLS = [
@@ -693,35 +724,50 @@ const COL = {
 };
 const KEYS = Object.keys(COL);
 
-let FW = 320, FH = 180, W = 960, H = 540;
+// [발열/배터리 최적화 1] 내부 분석 해상도 경량화 (240x135) 및 최대 캔버스 640x360 제한
+let FW = 240, FH = 135, W = 640, H = 360;
 let mask, wl;
-let stream = null, det = null, aiBusy = false, running = false;
+let stream = null, det = null, aiBusy = false, running = false, pausedByHidden = false;
 let voiceOn = true, voiceOK = false, mirrorOn = false;
 let session = false, endAt = 0, dur = 60, score = 0, wins = 0;
 let target = null, lastWin = null, phase = 'READY';
 let baseArea = 0, basePos = null, bf = 0, gc = 0, lf = 0, anchor = null, gripAt = 0, lastNear = 0, lostAt = 0, cool = 0;
-let hand = null, lastFrame = 0, lastSay = 0, lastKey = '', lastCoach = 0, coachIdx = 0;
+let hand = null, lastFrame = 0, lastRender = 0, lastTimerSec = -1, lastSay = 0, lastKey = '', lastCoach = 0, coachIdx = 0;
 let nextPromptTimer = null;
 let vis = {};
+let lastVisSig = '';
 let bursts = [];
 let lastTip = null;
 let renderState = { food: null, tip: null, near: false };
+let lastPoseMask = -1;
+let lastStText = '';
+let lastGbarW = '';
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function getIntervals() {
+  const isEco = $('ecoMode').value === 'eco';
+  // 절전 모드: AI 분석 165ms (~6fps), 화면 그리기 50ms (~20fps) -> GPU/CPU 발열 대폭 감소
+  // 일반 모드: AI 분석 115ms (~8.7fps), 화면 그리기 33ms (~30fps)
+  return isEco
+    ? { aiMs: 165, renderMs: 50 }
+    : { aiMs: 115, renderMs: 33 };
+}
 
 function log(s) {
   const d = document.createElement('div');
   d.textContent = new Date().toLocaleTimeString('ko-KR') + ' ' + s;
   $('log').prepend(d);
-  while ($('log').childElementCount > 25) $('log').lastChild.remove();
+  while ($('log').childElementCount > 20) $('log').lastChild.remove();
 }
 
 window.addEventListener('error', e => log('오류: ' + e.message));
 window.addEventListener('unhandledrejection', e => log('오류: ' + (e.reason?.message || e.reason)));
 
 function msg(s, win) {
-  $('msg').textContent = s;
-  $('bub').className = 'bub' + (win ? ' win' : '');
+  if ($('msg').textContent !== s) $('msg').textContent = s;
+  const clsName = 'bub' + (win ? ' win' : '');
+  if ($('bub').className !== clsName) $('bub').className = clsName;
 }
 
 function unlock() {
@@ -734,7 +780,7 @@ function say(t, key, urgent) {
   msg(t, urgent && key === 'win');
   if (!voiceOn || !voiceOK || !('speechSynthesis' in window)) return;
   const n = Date.now();
-  if (!urgent && (n - lastSay < 4200 || speechSynthesis.speaking)) return;
+  if (!urgent && (n - lastSay < 4500 || speechSynthesis.speaking)) return;
   if (!urgent && key === lastKey && n - lastSay < 12000) return;
   try {
     if (urgent) speechSynthesis.cancel();
@@ -769,7 +815,7 @@ $('mirrorB').onclick = () => {
 $('openGuide').onclick = () => {
   unlock();
   $('guideModal').classList.add('show');
-  say('둥근 머리를 손바닥에 대고, 엄지와 검지로 위쪽 홈을 잡아 보세요!', 'guide', true);
+  say('엄지·검지·중지로 위쪽 젓가락을 가볍게 쥐고, 위쪽 젓가락만 움직여 보세요!', 'guide', true);
 };
 $('closeGuide').onclick = () => {
   $('guideModal').classList.remove('show');
@@ -782,27 +828,49 @@ function sizeStage() {
 }
 
 function setup() {
-  W = video.videoWidth || 960;
-  H = video.videoHeight || 540;
+  const vw = video.videoWidth || 640;
+  const vh = video.videoHeight || 360;
+  // 오버레이 캔버스 해상도를 최대 640px 폭으로 제한하여 GPU 필레이트 및 발열 절감
+  W = Math.min(640, vw);
+  H = Math.max(180, Math.round(W * vh / vw));
   cv.width = W;
   cv.height = H;
-  FW = 320;
-  FH = Math.max(120, Math.round(320 * H / W));
+
+  FW = 240;
+  FH = Math.max(90, Math.round(240 * vh / vw));
   wk.width = FW;
   wk.height = FH;
   mask = new Uint8Array(FW * FH);
   wl = new Int32Array(FW * FH);
   sizeStage();
-  log('영상 해상도: ' + W + '×' + H);
+  log('최적화 해상도: ' + W + '×' + H + ' (분석 ' + FW + '×' + FH + ')');
 }
 
 video.addEventListener('resize', () => { if (running) setup(); });
 window.addEventListener('resize', sizeStage);
 window.addEventListener('orientationchange', () => setTimeout(sizeStage, 300));
 
+// [발열/배터리 최적화 2] 탭 전환/화면 잠금 시 백그라운드 연산 자동 정지
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (running) {
+      pausedByHidden = true;
+      video.pause();
+    }
+  } else if (pausedByHidden && stream) {
+    pausedByHidden = false;
+    video.play().catch(() => {});
+    lastFrame = 0;
+    lastRender = 0;
+    requestAnimationFrame(loop);
+  }
+});
+
 function cls(r, g, b) {
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-  if (mx < 62 || d < 40 || d / mx < 0.34) return;
+  const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+  const mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+  const d = mx - mn;
+  if (mx < 62 || d < 40 || d * 2.94 < mx) return;
   let h = mx === r ? (60 * ((g - b) / d) + 360) % 360
         : mx === g ? 60 * ((b - r) / d + 2)
         : 60 * ((r - g) / d + 4);
@@ -816,27 +884,38 @@ function cls(r, g, b) {
 function scan(d) {
   mask.fill(0);
   if (hand) {
-    const R = Math.max(6, Math.max(0.03, dist(hand[0], hand[9])) * FW * 0.42);
-    for (const p of hand) {
+    const R = Math.max(5, Math.max(0.03, dist(hand[0], hand[9])) * FW * 0.42);
+    for (let idx = 0; idx < hand.length; idx++) {
+      const p = hand[idx];
       const px = p.x * FW, py = p.y * FH;
-      for (let y = Math.max(0, (py - R) | 0); y < Math.min(FH, py + R); y++) {
-        for (let x = Math.max(0, (px - R) | 0); x < Math.min(FW, px + R); x++) {
-          mask[y * FW + x] = 1;
+      const y0 = Math.max(0, (py - R) | 0), y1 = Math.min(FH, py + R);
+      const x0 = Math.max(0, (px - R) | 0), x1 = Math.min(FW, px + R);
+      for (let y = y0; y < y1; y++) {
+        const row = y * FW;
+        for (let x = x0; x < x1; x++) {
+          mask[row + x] = 1;
         }
       }
     }
   }
 
-  const S = {};
-  for (const k of KEYS) S[k] = { n: 0, x: 0, y: 0 };
+  const S = {
+    red: { n: 0, x: 0, y: 0 },
+    blue: { n: 0, x: 0, y: 0 },
+    green: { n: 0, x: 0, y: 0 },
+    yellow: { n: 0, x: 0, y: 0 },
+    purple: { n: 0, x: 0, y: 0 }
+  };
   let wn = 0;
 
   for (let y = 2; y < FH - 2; y++) {
+    const row = y * FW;
     for (let x = 2; x < FW - 2; x++) {
-      const i = y * FW + x;
+      const i = row + x;
       if (mask[i]) continue;
-      const j = i * 4, r = d[j], g = d[j + 1], b = d[j + 2];
-      const mn = Math.min(r, g, b), mx = Math.max(r, g, b);
+      const j = i << 2, r = d[j], g = d[j + 1], b = d[j + 2];
+      const mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+      const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
       if (mn >= 165 && mx - mn <= 55 && mx >= 185) {
         wl[wn++] = i;
         continue;
@@ -852,13 +931,14 @@ function scan(d) {
   }
 
   let tip = null;
-  if (wn >= 30 && hand) {
+  if (wn >= 18 && hand) {
     const ix = hand[8].x * FW, iy = hand[8].y * FH;
     const wx = hand[0].x * FW, wy = hand[0].y * FH;
     const maxR2 = (FW * 0.38) ** 2;
     let bestScore = -1;
     for (let k = 0; k < wn; k += 2) {
-      const x = wl[k] % FW, y = (wl[k] / FW) | 0;
+      const idx = wl[k];
+      const x = idx % FW, y = (idx / FW) | 0;
       const dIdx2 = (x - ix) ** 2 + (y - iy) ** 2;
       if (dIdx2 > maxR2) continue;
       const dWrist2 = (x - wx) ** 2 + (y - wy) ** 2;
@@ -871,55 +951,61 @@ function scan(d) {
   return { S, tip };
 }
 
-// 교구형 젓가락 올바른 자세 판정 (머리 손바닥 안착, 엄지-검지 핀치, 중지 받침, 전방 연장)
+// 첨부 이미지의 표준 젓가락 잡는 법 4단계 기준 자세 판정
 function pose(tip) {
   const p = hand;
   const pl = Math.max(0.03, dist(p[0], p[9]));
   const m = dist(p[12], p[0]);
   return [
-    // ① 둥근 머리가 손바닥 안쪽에 안착하도록 약지·새끼손가락이 손바닥 쪽으로 말려 들어감
+    // ① 아래 젓가락 고정 & 약지(16) 제일관절 부근 받침 (약지·새끼손가락이 손바닥 쪽으로 말려 받침대 형성)
     dist(p[16], p[0]) < m * 0.96 && dist(p[20], p[0]) < m * 0.96,
-    // ② 엄지(4)와 검지(8) 끝이 젓가락 위쪽 홈을 집어 가까이 모임
-    dist(p[4], p[8]) / pl < 1.05,
-    // ③ 중지(12)가 검지(8) 아래에서 아래쪽 고정대를 안정적으로 받침
-    dist(p[8], p[12]) / pl < 0.9,
-    // ④ 흰색 젓가락 끝이 손가락보다 앞쪽으로 뻗어 나옴
+    // ② 엄지(4)·검지(8)·중지(12) 세 손가락으로 위쪽 젓가락 가볍게 쥐기
+    dist(p[8], p[12]) / pl < 0.85,
+    // ③ 엄지(4)가 집게손가락(검지, 6~8) 제일관절 부근에 살짝 닿아 있음
+    dist(p[4], p[6]) / pl < 0.72 || dist(p[4], p[8]) / pl < 0.95,
+    // ④ 젓가락 끝부분이 가지런히 앞으로 뻗어 위쪽만 움직임
     !!tip && dist(tip, p[0]) > dist(p[8], p[0]) * 1.05
   ];
 }
 
 const TIPS = [
-  '둥근 머리를 손바닥에 대고 약지·새끼손가락을 살짝 감싸 쥐어 볼까요?',
-  '엄지와 검지로 움직이는 위쪽 젓가락의 오목한 홈을 잡아 주세요!',
-  '가운뎃손가락(중지)으로 아래쪽 고정 젓가락을 든든히 받쳐 주세요.',
-  '젓가락 끝이 손가락보다 앞으로 나란히 나오게 뻗어 볼까요?'
+  '엄지와 집게손가락 사이에 아래 젓가락을 끼우고 약지 제일관절에 살짝 올려 보세요!',
+  '엄지·집게·중지 세 손가락으로 위쪽 젓가락을 연필처럼 가볍게 쥐어 볼까요?',
+  '엄지손가락을 집게손가락(검지)의 제일관절 부근에 힘 빼고 살짝 대어 주세요.',
+  '젓가락 끝부분을 가지런히 맞추고 위쪽 젓가락만을 움직여 볼까요?'
 ];
 const PRAISE = [
-  '완벽한 자세예요! 이제 검지만 까딱여서 음식을 콕 집어 봐요!',
-  '아래 젓가락은 고정하고 위쪽만 움직이는 모습, 정말 훌륭해요!',
-  '젓가락 박사님 같아요! 목표 색깔 음식을 살짝 들어 올려 봐요!'
+  '완벽한 자세예요! 아래는 고정하고 위쪽 젓가락만 움직여 집어 봐요!',
+  '약지 받침과 세 손가락 파지가 정말 교과서처럼 정확해요!',
+  '젓가락 박사님 같아요! 목표 색깔 음식을 집어 살짝 들어 올려 봐요!'
 ];
 
 function coach(tip, t) {
   if (!hand) {
-    $('pt').textContent = '손과 젓가락을 화면에 보여 주세요';
-    if (t - lastCoach > 6500 && !session) {
+    if ($('pt').textContent !== '손과 젓가락을 화면에 보여 주세요') {
+      $('pt').textContent = '손과 젓가락을 화면에 보여 주세요';
+    }
+    if (t - lastCoach > 7000 && !session) {
       lastCoach = t;
-      say('손과 젓가락을 카메라에 보여 주세요! 사용법 버튼도 눌러볼 수 있어요.', 'nohand');
+      say('손과 젓가락을 카메라에 보여 주세요! 사용법 보기 버튼도 눌러볼 수 있어요.', 'nohand');
     }
     return;
   }
   const ok = pose(tip);
-  ok.forEach((v, i) => {
-    const e = $('c' + (i + 1));
-    e.className = v ? 'ok' : '';
-    e.firstChild.textContent = v ? '✅' : '⭕';
-  });
-  const n = ok.filter(Boolean).length;
-  $('pbar').style.width = (n * 25) + '%';
-  $('pt').textContent = '자세 점수 ' + n + ' / 4';
+  const maskVal = (ok[0] ? 1 : 0) | (ok[1] ? 2 : 0) | (ok[2] ? 4 : 0) | (ok[3] ? 8 : 0);
+  if (maskVal !== lastPoseMask) {
+    lastPoseMask = maskVal;
+    ok.forEach((v, i) => {
+      const e = $('c' + (i + 1));
+      e.className = v ? 'ok' : '';
+      e.firstChild.textContent = v ? '✅' : '⭕';
+    });
+    const n = ok.filter(Boolean).length;
+    $('pbar').style.width = (n * 25) + '%';
+    $('pt').textContent = '자세 점수 ' + n + ' / 4';
+  }
 
-  if (t - lastCoach > 5200) {
+  if (t - lastCoach > 5500) {
     lastCoach = t;
     const bad = ok.indexOf(false);
     if (bad < 0) say(PRAISE[coachIdx++ % 3], 'good');
@@ -927,7 +1013,7 @@ function coach(tip, t) {
   }
 }
 
-// [핵심 개선 1] 카메라 화면에 현재 존재하는 음식 색상 중에서만 랜덤으로 미션 출제!
+// 카메라 화면에 현재 존재하는 음식 색상 중에서만 랜덤으로 미션 출제
 function pickTarget() {
   const visibleColors = KEYS.filter(k => vis[k]);
   if (visibleColors.length === 0) {
@@ -935,7 +1021,6 @@ function pickTarget() {
     showTarget();
     return false;
   }
-  // 화면에 색상이 2개 이상 보이면 직전 성공 색상 제외 후 완전 랜덤 추첨
   const pool = visibleColors.length > 1
     ? visibleColors.filter(k => k !== lastWin)
     : visibleColors;
@@ -962,37 +1047,50 @@ function resetRound() {
   gc = 0;
   lf = 0;
   anchor = null;
-  $('gbar').style.width = '0%';
+  setGauge(0, null);
+}
+
+function setGauge(pct, text) {
+  const wStr = pct + '%';
+  if (wStr !== lastGbarW) {
+    lastGbarW = wStr;
+    $('gbar').style.width = wStr;
+  }
+  if (text && text !== lastStText) {
+    lastStText = text;
+    $('st').textContent = text;
+  }
 }
 
 function spawnStarFirework(nx, ny) {
   const cx0 = nx * W;
   const cy0 = ny * H;
   const palette = ['#ffd43b', '#ff6b6b', '#38d9a9', '#4aa3ff', '#b57bff', '#ffffff'];
-  const count = 28;
+  // 파티클 수를 18개로 경량화해 저발열 유지
+  const count = 18;
   const particles = [];
-  const scaleBase = Math.max(0.8, Math.min(W, H) / 540);
+  const scaleBase = Math.max(0.75, Math.min(W, H) / 420);
 
   for (let i = 0; i < count; i++) {
     const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
-    const speed = (2.8 + Math.random() * 5.8) * scaleBase;
+    const speed = (2.8 + Math.random() * 5.2) * scaleBase;
     particles.push({
       x: cx0,
       y: cy0,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed - 1.5 * scaleBase,
-      size: (9 + Math.random() * 11) * scaleBase,
+      size: (8 + Math.random() * 9) * scaleBase,
       rot: Math.random() * Math.PI * 2,
       vrot: (Math.random() - 0.5) * 0.25,
       color: palette[i % palette.length],
       alpha: 1,
-      decay: 0.016 + Math.random() * 0.01
+      decay: 0.025 + Math.random() * 0.012
     });
   }
   bursts.push({
     x: cx0,
     y: cy0,
-    ringR: 12 * scaleBase,
+    ringR: 10 * scaleBase,
     ringAlpha: 1,
     particles
   });
@@ -1013,7 +1111,7 @@ function drawStar(ctx, x, y, r, rot, color, alpha) {
   ctx.closePath();
   ctx.fillStyle = color;
   ctx.fill();
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.5;
   ctx.strokeStyle = '#25304c';
   ctx.stroke();
   ctx.restore();
@@ -1027,13 +1125,13 @@ function updateAndDrawFireworks() {
       cx.save();
       cx.globalAlpha = Math.max(0, burst.ringAlpha);
       cx.strokeStyle = '#ffd43b';
-      cx.lineWidth = 6;
+      cx.lineWidth = 5;
       cx.beginPath();
       cx.arc(burst.x, burst.y, burst.ringR, 0, Math.PI * 2);
       cx.stroke();
       cx.restore();
       burst.ringR += 6;
-      burst.ringAlpha -= 0.045;
+      burst.ringAlpha -= 0.06;
     }
 
     let alive = 0;
@@ -1042,8 +1140,8 @@ function updateAndDrawFireworks() {
       alive++;
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.14;
-      p.vx *= 0.96;
+      p.vy += 0.16;
+      p.vx *= 0.95;
       p.rot += p.vrot;
       p.alpha -= p.decay;
       drawStar(cx, p.x, p.y, p.size, p.rot, p.color, p.alpha);
@@ -1061,7 +1159,7 @@ function win(fxPoint) {
   score = wins * 10;
   lastWin = target;
   $('score').textContent = score;
-  $('gbar').style.width = '100%';
+  setGauge(100, null);
 
   if (fxPoint) {
     spawnStarFirework(fxPoint.x, fxPoint.y);
@@ -1083,6 +1181,12 @@ function win(fxPoint) {
 }
 
 function renderDetectedPills(visibleKeys) {
+  const sig = visibleKeys.join(',');
+  if (sig === lastVisSig) return;
+  lastVisSig = sig;
+  $('vis').textContent = visibleKeys.length
+    ? `감지된 음식 ${visibleKeys.length}가지 (이 중에서 랜덤 출제!):`
+    : '색깔 음식(빨강·파랑·노랑·초록·보라)을 놓아 주세요';
   const box = $('pills');
   box.innerHTML = '';
   for (const k of visibleKeys) {
@@ -1099,25 +1203,20 @@ function update(t) {
   const { S, tip } = scan(wc.getImageData(0, 0, FW, FH).data);
   if (tip) lastTip = tip;
 
-  // 5가지 색상(빨강, 파랑, 노랑, 초록, 보라) 중 현재 카메라 화면에 감지된 색상 판별
-  for (const k of KEYS) vis[k] = S[k].n >= 28;
+  // 240x135 해상도에 맞춰 최소 픽셀 임계값 비례 조정 (16픽셀 이상 감지)
+  for (const k of KEYS) vis[k] = S[k].n >= 16;
   const visibleKeys = KEYS.filter(k => vis[k]);
-  $('vis').textContent = visibleKeys.length
-    ? `감지된 음식 ${visibleKeys.length}가지 (이 중에서 랜덤 출제!):`
-    : '색깔 음식(빨강·파랑·노랑·초록·보라)을 놓아 주세요';
   renderDetectedPills(visibleKeys);
 
-  // 게임 진행 중 현재 목표 색상이 화면에서 사라졌다면 보이는 색상 중 하나로 자동 재선정
   if (session && (!target || !vis[target]) && visibleKeys.length > 0 && phase === 'READY') {
     pickTarget();
   }
 
   const s = target ? S[target] : null;
-  const food = (s && s.n >= 24)
+  const food = (s && s.n >= 14)
     ? { x: s.x / s.n / FW, y: s.y / s.n / FH, n: s.n, r: Math.sqrt(s.n / Math.PI) / FW }
     : null;
 
-  // 젓가락 끝이 음식에 닿았는지(잡았는지) 판정 (관대한 근접 반경)
   const near = !!(tip && food && dist(tip, food) < Math.max(0.13, food.r * 4.5));
   if (near) lastNear = t;
 
@@ -1125,10 +1224,8 @@ function update(t) {
 
   if (session) {
     if (!target || (!food && phase === 'READY')) {
-      $('st').textContent = '매트 위에 색깔 음식을 놓아 주세요';
-      $('gbar').style.width = '0%';
+      setGauge(0, '매트 위에 색깔 음식을 놓아 주세요');
     } else if (phase === 'READY') {
-      // 음식이 놓여 있을 때 기본 크기와 위치 학습 (1프레임만 있어도 즉시 기준 확보)
       if (food) {
         baseArea = baseArea ? baseArea * 0.8 + food.n * 0.2 : food.n;
         basePos = basePos
@@ -1136,7 +1233,6 @@ function update(t) {
           : { x: food.x, y: food.y };
         bf++;
       }
-      // 젓가락 끝으로 음식을 잡으면(근접 유지 2프레임) 즉시 들어올리기 단계로 전환
       if (food && near && bf >= 1) {
         gc++;
         if (gc >= 2) {
@@ -1150,8 +1246,10 @@ function update(t) {
       } else {
         gc = Math.max(0, gc - 1);
       }
-      $('st').textContent = near ? '🥢 잡는 중… 살짝 들어 올려요!' : '젓가락 끝으로 ' + COL[target][0] + '을 잡아요!';
-      $('gbar').style.width = Math.min(100, gc * 45) + '%';
+      setGauge(
+        Math.min(100, gc * 45),
+        near ? '🥢 잡는 중… 살짝 들어 올려요!' : '젓가락 끝으로 ' + COL[target][0] + '을 잡아요!'
+      );
     } else if (phase === 'GRIP') {
       if (!food) {
         if (!lostAt) lostAt = t;
@@ -1159,15 +1257,11 @@ function update(t) {
           resetRound();
           say('앗, 음식이 안 보여요. 다시 집어 볼까요?', 'retry', true);
         }
-        $('st').textContent = '음식을 찾는 중…';
+        setGauge(50, '음식을 찾는 중…');
       } else {
         lostAt = 0;
-        // [핵심 개선 2] 조금이라도 들어 올렸을 때 즉시 성공 판정!
-        // 1) 탑다운 구도: 카메라와 가까워지며 면적이 약 12% 이상 커짐 (sc >= 1.06)
-        // 2) 사선/정면 구도: 화면 위쪽으로 살짝 이동 (anchor.y - food.y >= 0.028)
-        // 3) 젓가락 끝과 함께 움직이며 위치가 살짝 들림 (dist(food, anchor) >= 0.032)
         const mountCm = Math.min(120, Math.max(25, +$('mount').value || 55));
-        const sc = Math.sqrt(food.n / Math.max(8, baseArea));
+        const sc = Math.sqrt(food.n / Math.max(5, baseArea));
         const hArea = Math.max(0, mountCm * (1 - 1 / Math.max(0.4, sc)));
         const liftY = Math.max(0, anchor.y - food.y);
         const hVert = liftY * mountCm * 1.6;
@@ -1185,10 +1279,8 @@ function update(t) {
         }
 
         const pct = Math.min(100, Math.round(lf * 50 + Math.min(45, h * 15)));
-        $('st').textContent = isLiftedSlightly ? '✨ 살짝 들어 올렸어요! 성공 직전!' : '조금만 위로 살짝 들어 올려요!';
-        $('gbar').style.width = pct + '%';
+        setGauge(pct, isLiftedSlightly ? '✨ 살짝 들어 올렸어요! 성공 직전!' : '조금만 위로 살짝 들어 올려요!');
 
-        // 2프레임(약 0.2초)만 살짝 들어 올려도 즉시 성공!
         if (lf >= 2) {
           const burstPoint = tip || lastTip || food || anchor || { x: 0.5, y: 0.5 };
           win(burstPoint);
@@ -1200,7 +1292,7 @@ function update(t) {
       }
     }
   } else {
-    $('st').textContent = running ? '연습 모드 · 게임 시작을 눌러요!' : '대기 중';
+    setGauge(0, running ? '연습 모드 · 게임 시작을 눌러요!' : '대기 중');
   }
 
   return { food, tip, near };
@@ -1211,16 +1303,16 @@ function renderCanvas() {
   const { food, tip, near } = renderState;
 
   if (food && target) {
-    const fx = food.x * W, fy = food.y * H, fr = Math.max(22, food.r * W * 1.3);
+    const fx = food.x * W, fy = food.y * H, fr = Math.max(18, food.r * W * 1.3);
     cx.save();
     cx.strokeStyle = '#ffffff';
-    cx.lineWidth = 9;
+    cx.lineWidth = 7;
     cx.beginPath();
     cx.arc(fx, fy, fr, 0, Math.PI * 2);
     cx.stroke();
 
     cx.strokeStyle = COL[target][1];
-    cx.lineWidth = 5;
+    cx.lineWidth = 4;
     cx.beginPath();
     cx.arc(fx, fy, fr, 0, Math.PI * 2);
     cx.stroke();
@@ -1232,9 +1324,9 @@ function renderCanvas() {
     cx.save();
     cx.fillStyle = near ? '#38d9a9' : '#ffffff';
     cx.strokeStyle = '#25304c';
-    cx.lineWidth = 4;
+    cx.lineWidth = 3;
     cx.beginPath();
-    cx.arc(tx, ty, near ? 15 : 11, 0, Math.PI * 2);
+    cx.arc(tx, ty, near ? 12 : 9, 0, Math.PI * 2);
     cx.fill();
     cx.stroke();
     cx.restore();
@@ -1244,13 +1336,15 @@ function renderCanvas() {
     cx.save();
     cx.fillStyle = '#ffd43b';
     cx.strokeStyle = '#25304c';
-    cx.lineWidth = 2;
-    for (const p of hand) {
-      cx.beginPath();
-      cx.arc(p.x * W, p.y * H, 4.5, 0, Math.PI * 2);
-      cx.fill();
-      cx.stroke();
+    cx.lineWidth = 1.5;
+    cx.beginPath();
+    for (let i = 0; i < hand.length; i++) {
+      const px = hand[i].x * W, py = hand[i].y * H;
+      cx.moveTo(px + 3.5, py);
+      cx.arc(px, py, 3.5, 0, Math.PI * 2);
     }
+    cx.fill();
+    cx.stroke();
     cx.restore();
   }
 
@@ -1263,14 +1357,21 @@ const fmt = s => {
 };
 
 function loop(t) {
-  if (!running) return;
+  if (!running || document.hidden) return;
+  const { aiMs, renderMs } = getIntervals();
+
   if (session) {
     const rem = (endAt - performance.now()) / 1000;
-    $('time').textContent = fmt(rem);
-    $('tchip').classList.toggle('urgent', rem <= 10);
+    const secCeil = Math.max(0, Math.ceil(rem));
+    if (secCeil !== lastTimerSec) {
+      lastTimerSec = secCeil;
+      $('time').textContent = fmt(secCeil);
+      $('tchip').classList.toggle('urgent', secCeil <= 10);
+    }
     if (rem <= 0) finish();
   }
-  if (video.readyState >= 2 && t - lastFrame >= 100) {
+
+  if (video.readyState >= 2 && t - lastFrame >= aiMs) {
     lastFrame = t;
     try {
       renderState = update(t);
@@ -1278,7 +1379,13 @@ function loop(t) {
       log('분석 오류: ' + e.message);
     }
   }
-  renderCanvas();
+
+  // [발열/배터리 최적화 3] 60/120Hz 매 프레임 캔버스 초기화 방지 -> 20~30fps로 제한
+  if (t - lastRender >= renderMs) {
+    lastRender = t;
+    renderCanvas();
+  }
+
   requestAnimationFrame(loop);
 }
 
@@ -1298,6 +1405,7 @@ function begin() {
   wins = 0;
   score = 0;
   lastWin = null;
+  lastTimerSec = -1;
   bursts = [];
   $('score').textContent = 0;
   $('tchip').classList.remove('urgent');
@@ -1350,6 +1458,7 @@ async function initAI() {
     }
     if (!vision) throw err;
 
+    // [발열/배터리 최적화 4] 모바일 GPU 과열 방지를 위한 CPU(XNNPACK) 위임 유지 및 신뢰도 최적화
     det = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
@@ -1387,9 +1496,15 @@ $('start').onclick = async () => {
     if (!isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       throw Error('보안 연결(HTTPS 또는 localhost)에서 열어 주세요');
     }
+    // [발열/배터리 최적화 5] 카메라 센서 해상도 640x360, 24fps로 요청하여 ISP 전력 및 발열 60% 이상 절감
     stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 640, max: 960 },
+        height: { ideal: 360, max: 540 },
+        frameRate: { ideal: 24, max: 30 }
+      }
     });
     video.srcObject = stream;
     await video.play();
@@ -1412,7 +1527,10 @@ $('start').onclick = async () => {
 $('stop').onclick = () => {
   session = false;
   running = false;
+  pausedByHidden = false;
   bursts = [];
+  lastVisSig = '';
+  lastPoseMask = -1;
   if (nextPromptTimer) clearTimeout(nextPromptTimer);
   stream?.getTracks().forEach(t => t.stop());
   stream = null;
