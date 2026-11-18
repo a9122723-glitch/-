@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#72c6ff">
-<title>🐰 콕콕 젓가락 대모험 v1.3</title>
+<title>🐰 콕콕 젓가락 대모험 v1.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -178,7 +178,7 @@ h1 {
 
 #stage.on #ph { display: none; }
 
-/* 미션 배너 */
+/* 미션 배너 (상단) */
 .hud-target {
   position: absolute;
   top: 12px;
@@ -191,7 +191,7 @@ h1 {
   background: rgba(255, 253, 247, 0.96);
   border: 3px solid var(--ink);
   border-radius: 999px;
-  padding: 5px 16px;
+  padding: 6px 18px;
   box-shadow: 0 4px 0 var(--ink);
   font-size: clamp(16px, 2.2vw, 22px);
   white-space: nowrap;
@@ -207,6 +207,63 @@ h1 {
   border: 3px solid var(--ink);
   box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18);
   flex-shrink: 0;
+}
+
+/* 화면 중앙 대형 미션/성공 알림 팝업 배너 (음성과 동시 표출) */
+#missionCallout {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%) translateY(16px) scale(0.92);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 253, 247, 0.97);
+  border: 4px solid var(--ink);
+  border-radius: 26px;
+  padding: 12px 22px;
+  box-shadow: 0 6px 0 var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: calc(100% - 28px);
+}
+
+#missionCallout.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+#missionCallout.win-banner {
+  background: #fff3bf;
+  border-color: #f08c00;
+  box-shadow: 0 6px 0 #f08c00;
+}
+
+.callout-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3.5px solid var(--ink);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.18);
+  flex-shrink: 0;
+}
+
+.callout-texts {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.callout-sub {
+  font-size: 13px;
+  color: #5f3dc4;
+}
+
+.callout-main {
+  font-size: clamp(20px, 3vw, 28px);
+  color: var(--ink);
 }
 
 /* 종료 팝업 */
@@ -265,7 +322,7 @@ h1 {
 .bub p {
   margin: 0;
   font-size: clamp(15px, 2.1vw, 21px);
-  line-height: 1.35;
+  line-height: 1.38;
 }
 
 .bub.win {
@@ -386,7 +443,7 @@ select {
   border: 1.5px solid var(--ink);
 }
 
-/* 자세 체크리스트 (표준 젓가락 파지법 4단계) */
+/* 자세 체크리스트 */
 ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 li {
   font-size: 14.5px;
@@ -405,7 +462,7 @@ li.ok {
   color: #087f5b;
 }
 
-/* 그림 젓가락 사용법 가이드 모달 (첨부 이미지 기반 재설계) */
+/* 그림 젓가락 사용법 가이드 모달 */
 #guideModal {
   position: fixed;
   inset: 0;
@@ -518,7 +575,7 @@ li.ok {
 <body>
 <div class="app">
   <header>
-    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.3</span></h1>
+    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.4</span></h1>
     <div class="header-chips">
       <span class="chip">⭐ <span id="score">0</span>점</span>
       <span class="chip timer" id="tchip">⏱ <span id="time">01:00</span></span>
@@ -528,9 +585,18 @@ li.ok {
   <section class="play">
     <div class="cam" id="camBox">
       <div class="hud-target" id="hudTgt">
-        <span>🎯 목표 음식:</span>
+        <span>🎯 이번 미션:</span>
         <span class="hud-dot" id="hudDot"></span>
-        <b id="hudName">음식 찾는 중…</b>
+        <b id="hudName">음식을 찾고 있어요</b>
+      </div>
+
+      <!-- 화면과 음성으로 동시에 미션 및 색상별 성공을 알려주는 카드 배너 -->
+      <div id="missionCallout" role="status" aria-live="polite">
+        <span class="callout-dot" id="calloutDot"></span>
+        <div class="callout-texts">
+          <span class="callout-sub" id="calloutSub">새로운 미션!</span>
+          <b class="callout-main" id="calloutMain">빨간색 음식을 들어 올려 보세요!</b>
+        </div>
       </div>
 
       <div id="stage">
@@ -540,17 +606,17 @@ li.ok {
         <div id="ph">
           <div>
             <span class="cam-icon">📷</span><br>
-            <b>‘카메라 켜기’</b>를 눌러 모험을 시작해요!<br>
+            <b>‘카메라 켜기’</b>를 눌러서 같이 놀아요!<br>
             <small style="opacity:0.85">매트 위에 색깔 음식을 놓고 비춰 주세요</small>
           </div>
         </div>
 
         <div id="end">
           <div class="modal">
-            <h2>🏆 모험 완료!</h2>
+            <h2>🏆 오늘 놀이 끝!</h2>
             <div id="stars"></div>
             <p id="res"></p>
-            <button class="btn-play" id="again">🔄 한 번 더 하기</button>
+            <button class="btn-play" id="again">🔄 한 번 더 해볼까요?</button>
           </div>
         </div>
       </div>
@@ -558,7 +624,7 @@ li.ok {
 
     <div class="bub" id="bub">
       <div class="avatar">🐰</div>
-      <p id="msg">안녕! 나는 토끼 코치 콕콕이야. 카메라를 켜고 올바른 젓가락 자세부터 배워볼까?</p>
+      <p id="msg">안녕! 나는 토끼 선생님 콕콕이야. 카메라를 켜고 같이 젓가락 연습해 볼까?</p>
     </div>
   </section>
 
@@ -592,7 +658,7 @@ li.ok {
 
     <div class="card">
       <h3>🚀 들어올리기 게이지</h3>
-      <div class="mini" id="st">대기 중</div>
+      <div class="mini" id="st">준비하고 있어요</div>
       <div class="bar mint" style="margin-top:6px"><div id="gbar"></div></div>
     </div>
 
@@ -619,8 +685,8 @@ li.ok {
         </select>
       </label>
       <div class="mini">
-        • <b>저발열·배터리 보호</b>를 위해 카메라 해상도(640×360)와 AI 연산 주기를 최적화했습니다.<br>
-        • 화면을 벗어나거나 다른 앱으로 전환하면 카메라와 AI 연산이 자동으로 일시정지됩니다.<br>
+        • 미션 출제 시 화면 배너와 자연스러운 한국 여성 음성으로 동시에 안내합니다.<br>
+        • 색깔별 성공 시 <b>“파란색 음식 성공!”</b>, <b>“빨간색 음식 성공!”</b>처럼 해당 색상을 정확히 칭찬해 줍니다.<br>
         • 영상은 기기 내부에서만 분석되며 외부로 전송·저장되지 않아요.
       </div>
       <div id="log"></div>
@@ -628,44 +694,35 @@ li.ok {
   </aside>
 </div>
 
-<!-- 첨부 이미지(올바른 젓가락 파지법 도해) 기반 가이드 모달 -->
+<!-- 올바른 젓가락 사용법 보기 모달 -->
 <div id="guideModal">
   <div class="guide-box">
     <h2>🥢 올바른 젓가락 사용법 보기</h2>
     <div class="guide-diagram">
       <svg viewBox="0 0 460 225" width="100%" height="195" aria-label="올바른 젓가락 파지법 상세 그림">
-        <!-- 배경 가이드 원 -->
         <rect x="6" y="6" width="448" height="213" rx="14" fill="#fffdf9" stroke="#e9ecef" stroke-width="2"/>
-
-        <!-- 위쪽 젓가락 (움직이는 젓가락) -->
+        <!-- 위쪽 젓가락 -->
         <polygon points="48,68 410,96 410,103 48,73" fill="#e03131" stroke="#25304c" stroke-width="2" stroke-linejoin="round"/>
-        <!-- 아래쪽 젓가락 (고정 젓가락) -->
+        <!-- 아래쪽 젓가락 -->
         <polygon points="48,118 410,121 410,128 48,123" fill="#c92a2a" stroke="#25304c" stroke-width="2" stroke-linejoin="round"/>
-
         <!-- 손목 및 손등 윤곽 -->
         <path d="M295,212 L282,155 Q274,132 252,115 L235,88 Q232,72 248,68 Q272,64 298,82 L322,112 L345,165 L355,212 Z" fill="#ffe3d3" stroke="#25304c" stroke-width="2.5" stroke-linejoin="round"/>
-
-        <!-- 중지 (가운뎃손가락 - 위쪽 젓가락 받침) -->
+        <!-- 중지 -->
         <path d="M250,96 L202,94 Q190,98 194,108 L248,112" fill="#ffd8c2" stroke="#25304c" stroke-width="2.3" stroke-linecap="round"/>
-        <!-- 약지 (네번째 손가락 - 제일관절 부근에 아래쪽 젓가락 올려놓음) -->
+        <!-- 약지 -->
         <path d="M255,116 L210,122 Q200,128 206,136 L256,132" fill="#ffd8c2" stroke="#25304c" stroke-width="2.3" stroke-linecap="round"/>
         <!-- 새끼손가락 -->
         <path d="M262,135 L232,143 Q225,148 230,155 L264,149" fill="#ffd8c2" stroke="#25304c" stroke-width="2.3" stroke-linecap="round"/>
-
-        <!-- 검지 (집게손가락 - 위쪽 젓가락 위에서 쥠) -->
+        <!-- 검지 -->
         <path d="M276,78 L224,72 Q208,73 210,84 L256,92" fill="#ffe3d3" stroke="#25304c" stroke-width="2.5" stroke-linecap="round"/>
-
-        <!-- 엄지손가락 (검지 제일관절 부근에 살짝 대고 아래 젓가락 끼워 고정) -->
+        <!-- 엄지 -->
         <path d="M286,152 L252,102 Q245,86 258,82 Q270,80 278,96 L305,142" fill="#ffe3d3" stroke="#25304c" stroke-width="2.5" stroke-linecap="round"/>
-        <!-- 엄지 손톱 -->
         <path d="M253,86 Q261,83 266,91 L258,95 Q252,92 253,86 Z" fill="#ffc9c9" stroke="#25304c" stroke-width="1.6"/>
-
-        <!-- 끝부분 개폐 점선 호 & 화살표 -->
+        <!-- 끝부분 개폐 화살표 -->
         <path d="M40,66 Q32,96 40,125" fill="none" stroke="#f03e3e" stroke-width="2.5" stroke-dasharray="3,3"/>
         <polygon points="40,63 36,70 44,70" fill="#f03e3e"/>
         <polygon points="40,128 36,121 44,121" fill="#f03e3e"/>
 
-        <!-- 지시선 및 라벨 텍스트 (첨부 이미지 핵심 포인트 그대로 시각화) -->
         <text x="14" y="34" font-size="12.5" fill="#25304c">① 위쪽 젓가락만을</text>
         <text x="26" y="49" font-size="12.5" fill="#25304c">움직인다.</text>
 
@@ -715,16 +772,16 @@ const WASM_URLS = [
   'https://unpkg.com/@mediapipe/tasks-vision@0.10.14/wasm'
 ];
 
+// [색상 데이터 확장] [짧은 이름, 배지 컬러, 자연스러운 색상명(빨간색/파란색...), 목적격 조사(을/를)]
 const COL = {
-  red:    ['빨강 🍎', '#ff5d5d'],
-  blue:   ['파랑 🫐', '#4aa3ff'],
-  green:  ['초록 🥦', '#3ccf7e'],
-  yellow: ['노랑 🍌', '#ffd23f'],
-  purple: ['보라 🍇', '#b57bff']
+  red:    ['빨강 🍎', '#ff5d5d', '빨간색', '을'],
+  blue:   ['파랑 🫐', '#4aa3ff', '파란색', '을'],
+  green:  ['초록 🥦', '#3ccf7e', '초록색', '을'],
+  yellow: ['노랑 🍌', '#ffd23f', '노란색', '을'],
+  purple: ['보라 🍇', '#b57bff', '보라색', '을']
 };
 const KEYS = Object.keys(COL);
 
-// [발열/배터리 최적화 1] 내부 분석 해상도 경량화 (240x135) 및 최대 캔버스 640x360 제한
 let FW = 240, FH = 135, W = 640, H = 360;
 let mask, wl;
 let stream = null, det = null, aiBusy = false, running = false, pausedByHidden = false;
@@ -734,6 +791,7 @@ let target = null, lastWin = null, phase = 'READY';
 let baseArea = 0, basePos = null, bf = 0, gc = 0, lf = 0, anchor = null, gripAt = 0, lastNear = 0, lostAt = 0, cool = 0;
 let hand = null, lastFrame = 0, lastRender = 0, lastTimerSec = -1, lastSay = 0, lastKey = '', lastCoach = 0, coachIdx = 0;
 let nextPromptTimer = null;
+let calloutTimer = null;
 let vis = {};
 let lastVisSig = '';
 let bursts = [];
@@ -742,13 +800,12 @@ let renderState = { food: null, tip: null, near: false };
 let lastPoseMask = -1;
 let lastStText = '';
 let lastGbarW = '';
+let preferredKoreanFemaleVoice = null;
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 function getIntervals() {
   const isEco = $('ecoMode').value === 'eco';
-  // 절전 모드: AI 분석 165ms (~6fps), 화면 그리기 50ms (~20fps) -> GPU/CPU 발열 대폭 감소
-  // 일반 모드: AI 분석 115ms (~8.7fps), 화면 그리기 33ms (~30fps)
   return isEco
     ? { aiMs: 165, renderMs: 50 }
     : { aiMs: 115, renderMs: 33 };
@@ -764,15 +821,71 @@ function log(s) {
 window.addEventListener('error', e => log('오류: ' + e.message));
 window.addEventListener('unhandledrejection', e => log('오류: ' + (e.reason?.message || e.reason)));
 
+// [자연스러운 한국 여성 목소리 우선 선택]
+function selectKoreanFemaleVoice() {
+  if (!('speechSynthesis' in window)) return null;
+  const voices = speechSynthesis.getVoices();
+  const koVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('ko'));
+  if (!koVoices.length) return null;
+
+  // 자연스러운 한국 여성 TTS 엔진 우선순위 (Google 한국어, Microsoft SunHi, Apple Yuna/Sora, Samsung 여성 음성 등)
+  const femaleHints = ['sunhi', 'yuna', 'sora', 'heami', 'seoyeon', 'jiyeon', 'female', '여성', 'google 한국의', 'google korean'];
+  for (const hint of femaleHints) {
+    const matched = koVoices.find(v => v.name.toLowerCase().includes(hint));
+    if (matched) {
+      preferredKoreanFemaleVoice = matched;
+      return matched;
+    }
+  }
+  preferredKoreanFemaleVoice = koVoices[0];
+  return koVoices[0];
+}
+
+if ('speechSynthesis' in window) {
+  selectKoreanFemaleVoice();
+  speechSynthesis.onvoiceschanged = () => selectKoreanFemaleVoice();
+}
+
 function msg(s, win) {
   if ($('msg').textContent !== s) $('msg').textContent = s;
   const clsName = 'bub' + (win ? ' win' : '');
   if ($('bub').className !== clsName) $('bub').className = clsName;
 }
 
+// 화면 중앙 하단 대형 미션/성공 배너 표시 (음성과 동시에 시각적 전달)
+function showCallout(colorKey, subText, mainText, isWin = false, durationMs = 3400) {
+  const box = $('missionCallout');
+  const dot = $('calloutDot');
+  $('calloutSub').textContent = subText;
+  $('calloutMain').textContent = mainText;
+
+  if (colorKey && COL[colorKey]) {
+    dot.style.display = 'inline-block';
+    dot.style.background = COL[colorKey][1];
+  } else {
+    dot.style.display = 'none';
+  }
+
+  box.classList.toggle('win-banner', isWin);
+  box.classList.add('show');
+
+  if (calloutTimer) clearTimeout(calloutTimer);
+  if (durationMs > 0) {
+    calloutTimer = setTimeout(() => {
+      box.classList.remove('show');
+    }, durationMs);
+  }
+}
+
+function hideCallout() {
+  if (calloutTimer) clearTimeout(calloutTimer);
+  $('missionCallout').classList.remove('show');
+}
+
 function unlock() {
   if (voiceOK || !('speechSynthesis' in window)) return;
   voiceOK = true;
+  selectKoreanFemaleVoice();
   try { speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch {}
 }
 
@@ -784,12 +897,18 @@ function say(t, key, urgent) {
   if (!urgent && key === lastKey && n - lastSay < 12000) return;
   try {
     if (urgent) speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(t.replace(/[\u{1F300}-\u{1FAFF}]/gu, ''));
+    // 이모지 제거 및 자연스러운 띄어쓰기/쉼표 억양 정리
+    const cleanText = t
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const u = new SpeechSynthesisUtterance(cleanText);
     u.lang = 'ko-KR';
-    u.rate = 1.02;
-    u.pitch = 1.18;
-    const ko = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('ko'));
-    if (ko) u.voice = ko;
+    // 기계적인 고음(1.18) 대신 실제 한국 여성 선생님처럼 부드럽고 다정한 톤과 속도 적용
+    u.rate = 0.98;
+    u.pitch = 1.06;
+    const voice = preferredKoreanFemaleVoice || selectKoreanFemaleVoice();
+    if (voice) u.voice = voice;
     speechSynthesis.speak(u);
     lastSay = n;
     lastKey = key;
@@ -798,11 +917,26 @@ function say(t, key, urgent) {
   }
 }
 
+// [미션 안내 통합 함수] 음식 색상에 대한 미션을 화면(상단 HUD + 대형 배너 + 코치 말풍선)과 음성으로 동시에 알림
+function announceColorMission(colorKey, isFirst = false) {
+  if (!colorKey || !COL[colorKey]) return;
+  const [, , colorName] = COL[colorKey];
+  const subLabel = isFirst ? '첫 번째 미션이에요!' : '다음 미션이에요!';
+  const bannerMain = `${colorName} 음식을 들어 올려 보세요!`;
+  const spokenText = isFirst
+    ? `자, 시작해 볼까요? 이번엔 ${colorName} 음식을 젓가락으로 집어서 살짝 들어 올려 보세요!`
+    : `이번엔 ${colorName} 음식 차례예요! ${colorName} 음식을 집어서 살짝 들어 올려 볼까요?`;
+
+  showTarget();
+  showCallout(colorKey, subLabel, bannerMain, false, 4000);
+  say(spokenText, 'mission_' + colorKey, true);
+}
+
 $('voiceB').onclick = () => {
   unlock();
   voiceOn = !voiceOn;
   $('voiceB').textContent = voiceOn ? '🔊 음성 켜짐' : '🔇 음성 꺼짐';
-  if (voiceOn) say('좋아요! 같이 연습해요!', 't', true);
+  if (voiceOn) say('좋아요, 선생님 목소리가 다시 켜졌어요. 같이 연습해 봐요!', 't', true);
 };
 
 $('mirrorB').onclick = () => {
@@ -811,11 +945,10 @@ $('mirrorB').onclick = () => {
   $('mirrorB').textContent = mirrorOn ? '🪞 반전 켜짐' : '🪞 좌우 반전';
 };
 
-// 올바른 젓가락 사용법 모달 열기/닫기
 $('openGuide').onclick = () => {
   unlock();
   $('guideModal').classList.add('show');
-  say('엄지·검지·중지로 위쪽 젓가락을 가볍게 쥐고, 위쪽 젓가락만 움직여 보세요!', 'guide', true);
+  say('그림을 보면서 엄지, 검지, 중지로 위쪽 젓가락을 가볍게 쥐고 위쪽만 움직여 보세요.', 'guide', true);
 };
 $('closeGuide').onclick = () => {
   $('guideModal').classList.remove('show');
@@ -830,7 +963,6 @@ function sizeStage() {
 function setup() {
   const vw = video.videoWidth || 640;
   const vh = video.videoHeight || 360;
-  // 오버레이 캔버스 해상도를 최대 640px 폭으로 제한하여 GPU 필레이트 및 발열 절감
   W = Math.min(640, vw);
   H = Math.max(180, Math.round(W * vh / vw));
   cv.width = W;
@@ -850,7 +982,6 @@ video.addEventListener('resize', () => { if (running) setup(); });
 window.addEventListener('resize', sizeStage);
 window.addEventListener('orientationchange', () => setTimeout(sizeStage, 300));
 
-// [발열/배터리 최적화 2] 탭 전환/화면 잠금 시 백그라운드 연산 자동 정지
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (running) {
@@ -951,33 +1082,29 @@ function scan(d) {
   return { S, tip };
 }
 
-// 첨부 이미지의 표준 젓가락 잡는 법 4단계 기준 자세 판정
 function pose(tip) {
   const p = hand;
   const pl = Math.max(0.03, dist(p[0], p[9]));
   const m = dist(p[12], p[0]);
   return [
-    // ① 아래 젓가락 고정 & 약지(16) 제일관절 부근 받침 (약지·새끼손가락이 손바닥 쪽으로 말려 받침대 형성)
     dist(p[16], p[0]) < m * 0.96 && dist(p[20], p[0]) < m * 0.96,
-    // ② 엄지(4)·검지(8)·중지(12) 세 손가락으로 위쪽 젓가락 가볍게 쥐기
     dist(p[8], p[12]) / pl < 0.85,
-    // ③ 엄지(4)가 집게손가락(검지, 6~8) 제일관절 부근에 살짝 닿아 있음
     dist(p[4], p[6]) / pl < 0.72 || dist(p[4], p[8]) / pl < 0.95,
-    // ④ 젓가락 끝부분이 가지런히 앞으로 뻗어 위쪽만 움직임
     !!tip && dist(tip, p[0]) > dist(p[8], p[0]) * 1.05
   ];
 }
 
+// [자연스러운 한국 여성 말투로 전면 다듬은 코칭 멘트]
 const TIPS = [
-  '엄지와 집게손가락 사이에 아래 젓가락을 끼우고 약지 제일관절에 살짝 올려 보세요!',
-  '엄지·집게·중지 세 손가락으로 위쪽 젓가락을 연필처럼 가볍게 쥐어 볼까요?',
-  '엄지손가락을 집게손가락(검지)의 제일관절 부근에 힘 빼고 살짝 대어 주세요.',
-  '젓가락 끝부분을 가지런히 맞추고 위쪽 젓가락만을 움직여 볼까요?'
+  '엄지랑 검지 사이에 아래쪽 젓가락을 끼우고, 약지 첫 마디에 가볍게 올려 볼까요?',
+  '엄지, 검지, 중지 세 손가락으로 위쪽 젓가락을 연필 쥐듯이 살며시 잡아 보세요.',
+  '엄지손가락 힘을 살짝 빼고, 검지 첫 마디 옆에 가볍게 대어 주세요.',
+  '젓가락 끝을 가지런히 맞추고, 아래는 가만히 둔 채 위쪽 젓가락만 움직여 볼까요?'
 ];
 const PRAISE = [
-  '완벽한 자세예요! 아래는 고정하고 위쪽 젓가락만 움직여 집어 봐요!',
-  '약지 받침과 세 손가락 파지가 정말 교과서처럼 정확해요!',
-  '젓가락 박사님 같아요! 목표 색깔 음식을 집어 살짝 들어 올려 봐요!'
+  '와, 자세가 정말 좋아요! 그대로 위쪽 젓가락만 움직여서 음식을 집어 볼까요?',
+  '손가락 모양이 너무 예뻐요! 이제 목표 색깔 음식을 살며시 들어 올려 보세요.',
+  '정말 잘하고 있어요! 젓가락 박사님처럼 멋진 자세예요.'
 ];
 
 function coach(tip, t) {
@@ -985,9 +1112,9 @@ function coach(tip, t) {
     if ($('pt').textContent !== '손과 젓가락을 화면에 보여 주세요') {
       $('pt').textContent = '손과 젓가락을 화면에 보여 주세요';
     }
-    if (t - lastCoach > 7000 && !session) {
+    if (t - lastCoach > 7500 && !session) {
       lastCoach = t;
-      say('손과 젓가락을 카메라에 보여 주세요! 사용법 보기 버튼도 눌러볼 수 있어요.', 'nohand');
+      say('손이랑 젓가락을 카메라에 보여 주세요. 궁금하면 사용법 보기를 눌러봐도 좋아요.', 'nohand');
     }
     return;
   }
@@ -1005,7 +1132,7 @@ function coach(tip, t) {
     $('pt').textContent = '자세 점수 ' + n + ' / 4';
   }
 
-  if (t - lastCoach > 5500) {
+  if (t - lastCoach > 6000) {
     lastCoach = t;
     const bad = ok.indexOf(false);
     if (bad < 0) say(PRAISE[coachIdx++ % 3], 'good');
@@ -1013,7 +1140,6 @@ function coach(tip, t) {
   }
 }
 
-// 카메라 화면에 현재 존재하는 음식 색상 중에서만 랜덤으로 미션 출제
 function pickTarget() {
   const visibleColors = KEYS.filter(k => vis[k]);
   if (visibleColors.length === 0) {
@@ -1035,7 +1161,7 @@ function showTarget() {
     $('hudDot').style.background = '#dee2e6';
     return;
   }
-  $('hudName').textContent = COL[target][0];
+  $('hudName').textContent = COL[target][2] + ' 음식';
   $('hudDot').style.background = COL[target][1];
 }
 
@@ -1066,7 +1192,6 @@ function spawnStarFirework(nx, ny) {
   const cx0 = nx * W;
   const cy0 = ny * H;
   const palette = ['#ffd43b', '#ff6b6b', '#38d9a9', '#4aa3ff', '#b57bff', '#ffffff'];
-  // 파티클 수를 18개로 경량화해 저발열 유지
   const count = 18;
   const particles = [];
   const scaleBase = Math.max(0.75, Math.min(W, H) / 420);
@@ -1152,12 +1277,14 @@ function updateAndDrawFireworks() {
   }
 }
 
+// [성공 판정 처리] 색상별 맞춤 코멘트("파란색 음식 성공!", "빨간색 음식 성공!" 등) + 다음 미션 화면/음성 동시 안내
 function win(fxPoint) {
   if (!session || cool > performance.now()) return;
   cool = performance.now() + 1200;
   wins++;
   score = wins * 10;
-  lastWin = target;
+  const succeededColor = target;
+  lastWin = succeededColor;
   $('score').textContent = score;
   setGauge(100, null);
 
@@ -1165,7 +1292,14 @@ function win(fxPoint) {
     spawnStarFirework(fxPoint.x, fxPoint.y);
   }
 
-  say('와아! 성공이에요! 별 10점 획득! ⭐', 'win', true);
+  const colorName = succeededColor && COL[succeededColor] ? COL[succeededColor][2] : '목표';
+  const winHeadline = `${colorName} 음식 성공!`;
+  const winSpoken = `${colorName} 음식 성공! 우와, 정말 잘했어요!`;
+
+  // 성공 순간에도 화면 배너와 음성으로 동시에 "OO색 음식 성공!" 안내
+  showCallout(succeededColor, '참 잘했어요! ⭐ +10점', winHeadline, true, 1800);
+  say(winSpoken, 'win', true);
+
   resetRound();
   const hasNext = pickTarget();
 
@@ -1173,11 +1307,12 @@ function win(fxPoint) {
   nextPromptTimer = setTimeout(() => {
     if (!session) return;
     if (hasNext && target) {
-      say('이번엔 화면에 있는 ' + COL[target][0] + ' 음식을 집어 볼까요?', 'next');
+      announceColorMission(target, false);
     } else {
-      say('매트 위에 색깔 음식을 놓아 주세요!', 'needfood');
+      showCallout(null, '음식을 찾고 있어요', '매트 위에 색깔 음식을 놓아 주세요!', false, 3000);
+      say('매트 위에 색깔 음식을 올려 주시면 바로 다음 미션을 알려 드릴게요.', 'needfood', true);
     }
-  }, 2100);
+  }, 1900);
 }
 
 function renderDetectedPills(visibleKeys) {
@@ -1203,13 +1338,15 @@ function update(t) {
   const { S, tip } = scan(wc.getImageData(0, 0, FW, FH).data);
   if (tip) lastTip = tip;
 
-  // 240x135 해상도에 맞춰 최소 픽셀 임계값 비례 조정 (16픽셀 이상 감지)
   for (const k of KEYS) vis[k] = S[k].n >= 16;
   const visibleKeys = KEYS.filter(k => vis[k]);
   renderDetectedPills(visibleKeys);
 
+  // 게임 진행 중 현재 목표 색상이 화면에서 사라지면 보이는 색상 중 하나로 재선정하고 화면+음성 동시 안내
   if (session && (!target || !vis[target]) && visibleKeys.length > 0 && phase === 'READY') {
-    pickTarget();
+    if (pickTarget() && target) {
+      announceColorMission(target, false);
+    }
   }
 
   const s = target ? S[target] : null;
@@ -1241,23 +1378,23 @@ function update(t) {
           gripAt = t;
           lf = 0;
           lostAt = 0;
-          say('잡았다! 그대로 살짝만 들어 올려 봐요!', 'grip', true);
+          say(`좋아요, ${COL[target][2]} 음식을 잘 잡았어요! 그대로 살짝만 들어 올려 보세요.`, 'grip', true);
         }
       } else {
         gc = Math.max(0, gc - 1);
       }
       setGauge(
         Math.min(100, gc * 45),
-        near ? '🥢 잡는 중… 살짝 들어 올려요!' : '젓가락 끝으로 ' + COL[target][0] + '을 잡아요!'
+        near ? '🥢 잘 잡았어요! 살짝 들어 올려요' : `젓가락 끝으로 ${COL[target][2]} 음식을 집어요`
       );
     } else if (phase === 'GRIP') {
       if (!food) {
         if (!lostAt) lostAt = t;
         if (t - lostAt > 3000) {
           resetRound();
-          say('앗, 음식이 안 보여요. 다시 집어 볼까요?', 'retry', true);
+          say('어머, 음식이 잠깐 안 보이네요. 천천히 다시 집어 볼까요?', 'retry', true);
         }
-        setGauge(50, '음식을 찾는 중…');
+        setGauge(50, '음식을 찾고 있어요…');
       } else {
         lostAt = 0;
         const mountCm = Math.min(120, Math.max(25, +$('mount').value || 55));
@@ -1279,7 +1416,7 @@ function update(t) {
         }
 
         const pct = Math.min(100, Math.round(lf * 50 + Math.min(45, h * 15)));
-        setGauge(pct, isLiftedSlightly ? '✨ 살짝 들어 올렸어요! 성공 직전!' : '조금만 위로 살짝 들어 올려요!');
+        setGauge(pct, isLiftedSlightly ? '✨ 살짝 들어 올렸어요! 성공 직전!' : '조금만 위로 살짝 들어 올려 보세요');
 
         if (lf >= 2) {
           const burstPoint = tip || lastTip || food || anchor || { x: 0.5, y: 0.5 };
@@ -1288,11 +1425,11 @@ function update(t) {
       }
       if (phase === 'GRIP' && t - gripAt > 9500) {
         resetRound();
-        say('괜찮아요, 다시 한 번 집어 볼까요?', 'retry', true);
+        say('괜찮아요, 힘 빼고 다시 한 번 집어 볼까요?', 'retry', true);
       }
     }
   } else {
-    setGauge(0, running ? '연습 모드 · 게임 시작을 눌러요!' : '대기 중');
+    setGauge(0, running ? '연습 중이에요 · 게임 시작을 눌러요!' : '준비하고 있어요');
   }
 
   return { food, tip, near };
@@ -1380,7 +1517,6 @@ function loop(t) {
     }
   }
 
-  // [발열/배터리 최적화 3] 60/120Hz 매 프레임 캔버스 초기화 방지 -> 20~30fps로 제한
   if (t - lastRender >= renderMs) {
     lastRender = t;
     renderCanvas();
@@ -1392,12 +1528,13 @@ function loop(t) {
 function begin() {
   unlock();
   if (!running || !det) {
-    msg('카메라와 AI가 준비되면 시작할 수 있어요!');
+    msg('카메라와 AI 선생님이 준비되면 바로 시작할 수 있어요!');
     return;
   }
   const visibleColors = KEYS.filter(k => vis[k]);
   if (visibleColors.length === 0) {
-    say('먼저 카메라 화면에 색깔 음식(빨강, 파랑, 노랑, 초록, 보라)을 놓아 주세요!', 'nofood', true);
+    showCallout(null, '음식이 아직 안 보여요', '매트 위에 색깔 음식을 놓아 주세요!', false, 3000);
+    say('먼저 카메라 화면에 빨간색이나 파란색 같은 색깔 음식을 놓아 주세요.', 'nofood', true);
     return;
   }
   if (nextPromptTimer) clearTimeout(nextPromptTimer);
@@ -1415,11 +1552,14 @@ function begin() {
   resetRound();
   pickTarget();
   $('play').disabled = true;
-  say('출발! 화면에 있는 ' + COL[target][0] + ' 음식을 집어 살짝 들어 올려요!', 'go', true);
+
+  // 첫 미션도 화면 배너와 음성으로 동시에 안내
+  announceColorMission(target, true);
 }
 
 function finish() {
   session = false;
+  hideCallout();
   if (nextPromptTimer) clearTimeout(nextPromptTimer);
   $('play').disabled = false;
   $('time').textContent = fmt(dur);
@@ -1428,7 +1568,7 @@ function finish() {
   $('stars').textContent = '⭐'.repeat(wins ? st : 0) + '☆'.repeat(5 - (wins ? st : 0));
   $('res').textContent = '성공 ' + wins + '번 · 총 ' + score + '점!';
   $('end').classList.add('show');
-  say('시간 끝! ' + wins + '번이나 성공했어요. 정말 최고예요!', 'end', true);
+  say(`우와, 시간이 다 되었어요! 오늘 ${wins}번이나 성공했네요, 정말 대단해요!`, 'end', true);
 }
 
 $('play').onclick = begin;
@@ -1443,7 +1583,7 @@ async function initAI() {
   $('retry').disabled = true;
   try {
     let vision, err;
-    msg('AI 친구 콕콕이를 깨우는 중이에요… 🐰');
+    msg('토끼 선생님 콕콕이가 준비하고 있어요… 🐰');
     for (const wasmUrl of WASM_URLS) {
       try {
         vision = await Promise.race([
@@ -1458,7 +1598,6 @@ async function initAI() {
     }
     if (!vision) throw err;
 
-    // [발열/배터리 최적화 4] 모바일 GPU 과열 방지를 위한 CPU(XNNPACK) 위임 유지 및 신뢰도 최적화
     det = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
@@ -1472,10 +1611,10 @@ async function initAI() {
 
     if (!running) return;
     $('play').disabled = session;
-    say('준비 완료! 손을 보여 주면 젓가락 자세를 알려 줄게요!', 'ready', true);
+    say('준비 다 됐어요! 손을 보여 주면 올바른 젓가락 자세부터 같이 봐 줄게요.', 'ready', true);
     log('AI 모델 준비 완료');
   } catch (e) {
-    msg('AI를 불러오지 못했어요. [AI 다시] 버튼을 눌러 주세요.');
+    msg('AI 선생님을 불러오지 못했어요. [AI 다시] 버튼을 눌러 주세요.');
     log('AI 오류: ' + e.message);
   } finally {
     aiBusy = false;
@@ -1496,7 +1635,6 @@ $('start').onclick = async () => {
     if (!isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       throw Error('보안 연결(HTTPS 또는 localhost)에서 열어 주세요');
     }
-    // [발열/배터리 최적화 5] 카메라 센서 해상도 640x360, 24fps로 요청하여 ISP 전력 및 발열 60% 이상 절감
     stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {
@@ -1531,6 +1669,7 @@ $('stop').onclick = () => {
   bursts = [];
   lastVisSig = '';
   lastPoseMask = -1;
+  hideCallout();
   if (nextPromptTimer) clearTimeout(nextPromptTimer);
   stream?.getTracks().forEach(t => t.stop());
   stream = null;
@@ -1544,10 +1683,9 @@ $('stop').onclick = () => {
   $('pills').innerHTML = '';
   cx.clearRect(0, 0, W, H);
   speechSynthesis?.cancel();
-  msg('카메라를 껐어요. 다음에 또 만나요! 👋');
+  msg('카메라를 껐어요. 오늘 정말 잘했어, 다음에 또 만나요! 👋');
 };
 
-if ('speechSynthesis' in window) speechSynthesis.getVoices();
 showTarget();
 sizeStage();
 </script>
