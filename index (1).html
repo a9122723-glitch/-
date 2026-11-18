@@ -1,0 +1,562 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101b24"><title>젓가락 탐험대 v0.7.2 · 가로 화면 AI 코치</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",system-ui,sans-serif;color:#f1f6f5;background:#101b24}*{box-sizing:border-box}body{margin:0}button,select{font:inherit}button{border:0;border-radius:12px;background:#23a97d;color:#062a21;padding:12px 13px;font-weight:800;cursor:pointer}button:disabled{opacity:.45}.secondary{background:#283a46;color:#e5f0f0}.shell{height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) clamp(200px,24vw,294px);gap:8px;padding:8px;overflow:hidden}.viewer{min-width:0;min-height:0;display:flex;flex-direction:column;gap:6px}.top{display:flex;gap:8px;align-items:center;justify-content:space-between;min-height:32px}.title{font-weight:850;font-size:clamp(14px,2vw,20px)}.top .version{font-size:10px;color:#8fa9b1}.pill{background:#273d42;color:#f9e6a4;padding:7px 12px;border-radius:999px;font-weight:850;font-size:14px}.camera-space{min-height:0;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:14px;background:#060f17}.stage{position:relative;width:100%;height:100%;aspect-ratio:16/9;background:#091c1c;overflow:hidden}.stage video,.stage canvas{position:absolute;width:100%;height:100%;inset:0;object-fit:fill}.stage canvas{pointer-events:none}.stage .placeholder{position:absolute;inset:0;display:grid;place-content:center;gap:6px;text-align:center;color:#daebea;font-weight:800;font-size:clamp(16px,3vw,26px);padding:12px}.stage.ready .placeholder{display:none}.bottom-message{border-radius:10px;background:#193b39;padding:10px 12px;font-weight:750;font-size:clamp(12px,1.4vw,16px);line-height:1.35}.bottom-message.win{background:#4b4219;color:#ffe9a2}.rail{min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px;background:#152530;border-radius:14px}.rail h2{font-size:16px;margin:4px 0 0}.button-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.button-grid button{font-size:13px;padding:11px 6px}.button-grid #start{grid-column:span 2}.panel{border:1px solid #304651;border-radius:12px;padding:10px;display:grid;gap:8px}.mini{font-size:11px;color:#b1c6ca;line-height:1.5}.stat{display:flex;justify-content:space-between;gap:8px;font-size:12px}.stat strong{font-weight:760;color:#d7f5e8;text-align:right;max-width:60%}.progress{height:7px;background:#30444a;border-radius:10px;overflow:hidden}.progress div{height:100%;width:0;background:#4ad7ab;transition:width .15s}.rail details{border:1px solid #304651;border-radius:12px;padding:10px}.rail summary{cursor:pointer;font-size:13px;font-weight:750}.rail label{font-size:12px;display:flex;align-items:center;gap:7px}.rail select{background:#20343e;color:#fff;border:1px solid #455b62;border-radius:8px;padding:8px;width:100%;font-size:12px}.rail input[type=checkbox]{accent-color:#4ad7ab}.feedback{font-size:12px;color:#fed797;background:#3b3330;border-radius:8px;padding:8px}#log{font-size:11px;line-height:1.5;overflow-wrap:anywhere;max-height:150px;overflow-y:auto}#status{font-size:11px;line-height:1.4;color:#b8d0ce}.spacer{flex:1}.hint-rotate{display:none}.safe{font-size:10px;color:#91a9ab;line-height:1.4}@media(orientation:portrait){.shell{grid-template-columns:minmax(0,1fr) 138px;padding:5px;gap:5px}.rail{padding:5px}.rail h2{font-size:12px}.button-grid{grid-template-columns:1fr}.button-grid #start{grid-column:auto}.button-grid button{font-size:11px;padding:9px 3px}.stat{font-size:10px;display:block}.stat strong{display:block;text-align:left;max-width:none}.top .title{font-size:13px}.top .version{display:none}.hint-rotate{display:block;font-size:10px;color:#f7d99c}.bottom-message{font-size:11px;padding:7px}.panel{padding:6px}.rail details{padding:6px}}@media(max-height:420px) and (orientation:landscape){.shell{grid-template-columns:minmax(0,1fr) 194px;padding:4px}.top{min-height:22px}.bottom-message{padding:5px}.rail{gap:4px}.panel{padding:7px}.rail h2{display:none}}
+
+.session-panel{border:1px solid #466470;background:#1b3340;border-radius:12px;padding:10px;display:grid;gap:7px}
+.session-panel .session-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.session-panel .session-metrics>div{background:#253f49;padding:8px;border-radius:8px;text-align:center}
+.session-panel .number{font-size:clamp(17px,2.4vw,24px);font-weight:900;color:#ffe6a0;display:block;font-variant-numeric:tabular-nums}
+.session-panel .metric-label{font-size:10px;color:#c4d4d7}
+.session-panel label{font-size:12px;color:#dde7e9;display:flex;align-items:center;gap:8px}
+.session-panel select{flex:1;width:auto;background:#20343e;color:#fff;border:1px solid #526b77;border-radius:8px;padding:7px}
+.session-panel button{width:100%;padding:11px}
+.session-end{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(7,18,28,.84);padding:14px;text-align:center}
+.session-end.show{display:flex}.session-end>div{background:#203c45;border:1px solid #6d9b9d;border-radius:17px;max-width:400px;width:100%;padding:19px;color:#fff;box-shadow:0 12px 40px #061016aa}
+.session-end h2{font-size:clamp(20px,3vw,32px);margin:0 0 10px}.session-end .big{color:#ffdf82;font-size:clamp(26px,4vw,42px);font-weight:900;margin:10px 0}
+.session-end p{margin:7px 0}.session-end button{margin-top:13px;width:100%}
+@media(max-height:420px) and (orientation:landscape){.session-panel{padding:6px;gap:4px}.session-panel .session-metrics>div{padding:4px}.session-panel .number{font-size:17px}.session-panel label{font-size:10px}.session-panel button{padding:7px}}
+
+/* v0.7.2 — premium landscape play UI */
+:root{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard",system-ui,sans-serif;color:#edf4f2;background:#0a1118;--accent:#91e7bd;--surface:#14212b;--line:#31444d}
+body{background:radial-gradient(ellipse at 14% 0%,#203537 0%,#0a1118 56%);color:#edf4f2}
+.shell{gap:12px;padding:12px;grid-template-columns:minmax(0,1fr) clamp(214px,24vw,300px)}
+.viewer{gap:10px}.top{min-height:42px;padding:0 6px}.title{font-size:clamp(17px,2.1vw,23px);font-weight:820;letter-spacing:-.045em}.top .version{color:#9db3b3;font-size:11px}.pill{background:linear-gradient(130deg,#35402e,#263c37);border:1px solid #647556;color:#ffe3a0;padding:9px 14px;box-shadow:0 4px 18px #0003}
+.camera-space{background:#0b1619;border-radius:22px;border:1px solid #344b4a;box-shadow:0 22px 60px #0006;position:relative}.stage{border-radius:20px;background:#071312}.stage video{filter:contrast(1.02) saturate(.95)}
+.bottom-message{background:#1d3535;color:#e6fff1;border:1px solid #355854;border-radius:15px;font-size:clamp(12px,1.4vw,15px);font-weight:670;padding:13px 17px;box-shadow:0 4px 20px #0002}.bottom-message.win{background:#443a1f;border-color:#776535;color:#ffe5a4}
+.rail{border:1px solid #2c4549;border-radius:20px;background:linear-gradient(160deg,#182b31 0%,#12212c 75%);padding:14px;gap:12px;scrollbar-width:thin;box-shadow:0 12px 35px #0004}.rail h2{font-size:15px;font-weight:820;letter-spacing:-.025em;margin:0 0 2px}
+button{background:#91e7bd;color:#14372b;border-radius:12px;box-shadow:inset 0 1px 0 #ffffff54;transition:filter .12s,transform .12s}button:active{transform:scale(.98)}button:hover{filter:brightness(1.07)}.secondary{background:#29414a;color:#f0f8f6;box-shadow:none;border:1px solid #385761}
+.button-grid{gap:8px}.button-grid button{padding:12px 7px;font-size:12px}.button-grid #start{padding:13px 9px;font-size:13px;background:#a2e9c6}
+.session-panel{background:#20353d;border-color:#40565b;border-radius:15px;padding:12px;gap:10px}.session-panel .session-metrics>div{background:#132c34;border:1px solid #2d4c51;border-radius:11px;padding:11px 6px}.session-panel .number{color:#fff0b6;font-variant-numeric:tabular-nums}.session-panel .metric-label{color:#9dbac0}
+.panel{border:1px solid #324a50;border-radius:15px;padding:12px;background:#142630;gap:10px}.stat{align-items:center;color:#b5cacc}.stat strong{color:#ebfff3;font-weight:770}.progress{height:6px;background:#344a50}.progress div{background:linear-gradient(90deg,#71cba5,#c0f5cb)}
+.return-hint{font-size:12px;font-weight:750;line-height:1.45;color:#b4d7d3;background:#263d43;border-left:3px solid #719d98;border-radius:8px;padding:10px;transition:background .3s}.return-hint.active{background:#3c381e;border-left-color:#ffe292;color:#ffedb5}
+.rail details{border:1px solid #35515a;border-radius:12px;padding:11px;background:#172a34}.rail summary{font-size:12px;letter-spacing:-.01em}.rail select{background:#1b323c;border-color:#41606a;border-radius:9px}.rail input[type=checkbox]{accent-color:#93e6bd}
+#status{font-size:11px;color:#b0c7ce;word-break:break-word}.safe{color:#8ca5aa}.session-end{background:rgba(5,14,20,.88)}.session-end>div{background:linear-gradient(145deg,#23443c,#1a2933);border-color:#6b9b85;border-radius:23px}.session-end .big{color:#ffe49d}
+@media(orientation:portrait){.shell{gap:6px;padding:6px;grid-template-columns:minmax(0,1fr) clamp(126px,32vw,170px)}.rail{padding:7px;gap:6px;border-radius:12px}.camera-space{border-radius:12px}.stage{border-radius:10px}.rail h2{font-size:11px}.button-grid button{font-size:10px;padding:9px 4px}.session-panel{padding:7px;gap:5px}.top{min-height:24px}.top .version{display:none}.bottom-message{padding:8px;font-size:11px}.panel{padding:7px}.return-hint{font-size:10px;padding:6px}}
+@media(max-height:420px) and (orientation:landscape){.shell{gap:6px;padding:5px;grid-template-columns:minmax(0,1fr) 194px}.rail{padding:7px;gap:5px}.top{min-height:23px}.bottom-message{padding:6px}.session-panel{padding:6px;gap:4px}.panel{padding:7px}}
+
+/* v0.7.2 mission picker */
+.mode-panel{border:1px solid #416162;border-radius:15px;padding:12px;background:linear-gradient(145deg,#1b3438,#173039);display:grid;gap:9px}
+.mode-title{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:800;gap:5px}.mode-title span{font-size:11px;color:#a5f0cc;background:#294e48;padding:5px 8px;border-radius:20px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.mode-btn{padding:10px 5px;font-size:11px;background:#263f48;color:#d6eaeb;border:1px solid #435a5e}.mode-btn.active{background:#a0eccb;color:#133b2e;border-color:#c2ffe0}.mode-btn:last-child{grid-column:span 2}
+.mode-desc{font-size:11px;line-height:1.5;color:#bdd0d4}.ocr-btn{width:100%;font-size:12px;padding:10px}.ocr-switch{display:flex;gap:6px;font-size:11px;color:#d3e4e4;align-items:center}
+@media(max-height:420px) and (orientation:landscape){.mode-panel{padding:7px;gap:5px}.mode-btn{padding:7px 3px}}
+
+.target-panel{background:#182e35;border:1px solid #3d5e5c;border-radius:12px;padding:9px;display:grid;gap:7px}.target-panel label{font-size:12px;font-weight:750;color:#d1eee5}.target-panel select{width:100%;background:#213f48;color:#fff;border:1px solid #66827a;border-radius:9px;padding:9px}.target-status{font-size:11px;color:#d2e9e1}.target-status strong{color:#ffe4a0;font-size:14px}#visibleColors{font-size:10px;color:#aacac2}
+.color-chain-option{font-size:12px;color:#e7f3ea;font-weight:750;display:flex;gap:7px;align-items:center}.color-chain-option input{accent-color:#91e7bd}#colorChainStatus{border-left:3px solid #91e7bd;padding-left:8px;color:#c8f1da}</style></head><body><div class="shell"><main class="viewer"><div class="top"><div><span class="title">🥢 젓가락 탐험대</span> <span class="version">v0.7.2 · 교구 추적 · 색상 지정 미션 · 3가지 게임</span></div><span class="pill">⭐ <span id="score">0</span></span></div><div class="camera-space"><div id="stage" class="stage"><video id="video" autoplay muted playsinline webkit-playsinline></video><canvas id="overlay" width="960" height="540"></canvas><canvas id="celebration" width="960" height="540" aria-hidden="true"></canvas><div id="sessionEnd" class="session-end" role="status" aria-live="polite"><div><h2>🏆 시간 종료!</h2><p id="resultDuration">제한시간</p><div class="big" id="resultScore">0점</div><p id="resultMissions">성공 0회</p><p class="mini">게임별 미션 성공 1회당 10점 · 완료 후 자동 진행</p><button id="playAgain">↻ 다시 도전하기</button></div></div><div class="placeholder">📷 카메라 + AI 시작<br><small>가로 모드로 돌려 더 크게 플레이하세요</small></div></div></div><div id="message" class="bottom-message" aria-live="polite">카메라를 켜고 게임을 선택하거나 A4 종이의 게임명을 보여 주세요.</div><div class="hint-rotate">↻ 아이폰을 가로로 돌리면 카메라가 더 크게 보입니다.</div></main><aside class="rail"><h2>PLAY CONTROL</h2><div class="button-grid"><button id="start">📷 카메라 + AI 시작</button><button id="reset" class="secondary">↻ 새 미션</button><button id="testvoice" class="secondary">🔊 음성 테스트</button><button id="retry" class="secondary">AI 재연결</button><button id="stop" class="secondary">종료</button></div><section class="mode-panel" aria-label="게임 선택"><div class="mode-title">🎮 게임 선택 <span id="modeBadge">들어 올리기</span></div><div class="mode-grid"><button type="button" class="mode-btn active" data-mode="lift">↑ 들어 올리기</button><button type="button" class="mode-btn" data-mode="transfer">↗ A→B 옮기기</button><button type="button" class="mode-btn" data-mode="flip">↻ 앞뒤 뒤집기</button></div><div class="mode-desc" id="modeDescription">젓가락으로 음식을 집어 들어 올리세요.</div><div class="target-panel"><label for="targetColor">🎨 집어 올릴 음식 색상</label><select id="targetColor"><option value="auto">자동 선택 (감지된 색상 순환)</option><option value="red">빨강</option><option value="blue">파랑</option><option value="green">초록</option><option value="yellow">노랑</option><option value="purple">보라</option></select><div class="target-status">🎯 현재 목표 <strong id="targetLabel">빨강</strong><span id="visibleColors"> · 색상 탐색 대기</span></div><label class="color-chain-option"><input type="checkbox" id="colorChain" checked> 성공 후 다른 색상 자동 미션</label><div class="mini" id="colorChainStatus" aria-live="polite">성공해 +10점이 지급되면 즉시 다른 색상 미션을 시작해요.</div><div class="mini">서로 다른 색의 장난감 2개 이상을 화면에 놓아 주세요. 성공 즉시 방금 성공한 색상을 제외하고 다음 색상을 자동 지정합니다. 내려놓기·분리 확인을 기다리지 않습니다. 다른 색이 일시적으로 안 보여도 다음 목표는 바로 지정하며, 실제 검출까지 집기 판정만 대기합니다. 뒤집기는 빨강→파랑 전용입니다.</div></div><button type="button" id="ocrScan" class="secondary ocr-btn">▣ A4 한글 게임명 인식</button><label class="ocr-switch"><input type="checkbox" id="autoOcr" checked> 대기 중 자동 인식 (약 15초 간격)</label><div id="ocrStatus" class="mode-desc" aria-live="polite">A4 종이에 게임명을 크게 인쇄하세요. 게임 도중에는 전환하지 않습니다.</div></section><section class="session-panel" aria-label="제한시간 도전"><label for="sessionDuration">⏱ 제한시간<select id="sessionDuration"><option value="30">30초</option><option value="60" selected>1분</option><option value="120">2분</option><option value="180">3분</option><option value="300">5분</option></select></label><div class="session-metrics"><div><span class="number" id="timeLeft">01:00</span><span class="metric-label">남은 시간</span></div><div><span class="number" id="missionCount">0회</span><span class="metric-label">성공 횟수</span></div></div><button id="startSession" disabled>▶ 제한시간 게임 시작</button><div id="sessionHelp" class="mini">카메라와 AI 준비 후 게임을 시작하세요.</div></section><section class="panel"><div class="stat"><span>현재 단계</span><strong id="phase">대기</strong></div><div class="progress"><div id="bar"></div></div><div class="return-hint" id="returnHint" aria-live="polite">성공 즉시 다음 색상으로 자동 전환</div><div class="stat"><span>손 관절 (코칭 전용)</span><strong id="hand">대기</strong></div><div class="stat"><span>음식 추적</span><strong id="food">대기</strong></div><div class="stat"><span>현재 목표 색상</span><strong id="targetState">탐색 중</strong></div><div class="stat"><span>가림·추적 상태</span><strong id="trackingState">대기</strong></div><div class="stat"><span>신규 교구 인식 / 집게 끝</span><strong id="sticks">인식 대기</strong></div><div class="stat"><span>전용 교구 인식 신뢰도</span><strong id="productConfidence">판정 전</strong></div><div class="stat"><span>집게 끝 간격</span><strong id="tipGap">미측정</strong></div><div class="stat"><span>들기 높이(영상 추정)</span><strong id="heightEstimate">기준값 대기</strong></div><div class="stat"><span>자세 평가 (점수 미반영)</span><strong id="pose">대기</strong></div><div class="stat"><span>집기·높이 판정 근거</span><strong id="confidence">판정 전</strong></div><div id="coach" class="mini">안내 대기</div></section><div id="status">HTTPS 웹페이지에서 시작해 주세요.</div><details><summary>⚙️ 음성·판정 설정</summary><div class="panel"><label><input id="voice" type="checkbox" checked> 한국어 음성 코칭</label><label for="voiceSelect">한국어 음성 선택</label><select id="voiceSelect"><option value="">시스템 기본 음성</option></select><label for="rate">말하기 속도 <output id="rateText">1.00</output></label><input id="rate" type="range" min="0.85" max="1.15" value="1.0" step="0.05"><label for="cameraHeight">카메라-매트 거리 (cm)</label><input id="cameraHeight" type="number" min="25" max="120" value="55" style="width:100%;padding:9px;border-radius:9px;background:#20343e;color:#fff;border:1px solid #455b62"><label for="sensitivity">미션 판정</label><select id="sensitivity"><option value="normal">표준</option><option value="careful">신중 (오판정 감소)</option></select><div class="mini">집기 판정은 전용 교구의 두 끝점과 음식 위치를 기준으로 합니다. 손 자세는 성공 점수에 영향을 주지 않습니다.</div><label><input id="productMode" type="checkbox" checked> 신규 일체형 젓가락 인식 우선</label><button type="button" id="calibrateProduct" class="secondary">◎ 신규 젓가락 현재 형태 등록</button><div id="calibrationNote" class="mini">손을 치우고 신규 젓가락 전체를 카메라에 보여준 뒤 등록하세요. 학습형 AI는 아닙니다.</div><label><input id="showProduct" type="checkbox" checked> 연결부·집게 끝 추정 위치 표시</label><div class="mini">신규 교구의 흰색 전체 윤곽, 넓은 연결 몸체, 두 갈래 집게부를 함께 분석합니다. 표시 점수는 경험적 형상 적합도이며 학습된 AI 확률이 아닙니다. 학습형 객체 검출 AI가 아닌 형상 기반 실험 기능입니다.</div><div class="mini">높이 수치는 영상상 크기 변화에 따른 추정치이며 LiDAR 측정값이 아닙니다. 손에 가려지거나 장난감이 회전하면 부정확합니다.</div><label><input id="debugRods" type="checkbox" checked> 젓가락 후보 표시</label><label><input id="mirror" type="checkbox"> 좌우 반전</label><div class="mini">기기 기본 한국어 음성의 자연스러움은 iOS에 설치된 음성 종류에 따라 다릅니다. 고품질 녹음 음원은 별도 추가할 수 있습니다.</div></div></details><details><summary>🛠 진단 및 설정 안내</summary><div class="panel"><button id="copy" class="secondary">진단 기록 복사</button><div id="log"></div></div></details><details><summary>📖 게임 준비 및 기술적 한계</summary><div class="panel mini"><p>후면 카메라를 매트 위에 고정합니다. 빨강·파랑·초록·노랑·보라 등 채도가 높은 단색 장난감을 사용하고, 같은 색 물체는 가급적 한 개만 둡니다. 피부색과 비슷한 주황·베이지색은 초기 인식 대상에서 제외합니다. 짙은 무광 매트에 <b>원형 구멍이 있는 흰색 일체형 신규 젓가락 교구</b>를 추천합니다. 장난감 색상은 오른쪽 색상 선택에서 지정하거나 자동으로 전환합니다.</p><p>손 관절은 자세 음성 코칭용이며 미션 성공 판정과는 분리됩니다. 손이 카메라 밖으로 나가도 실패 처리하지 않습니다. 교구의 끝점이 음식에 접근한 뒤 영상 기반 들어 올리기 추정이 충족되면 성공합니다.</p><p>일체형 교구의 흰색 윤곽·넓은 몸체·두 집게 끝점 검출은 고전적 영상 알고리즘의 <b>후보 추정</b>이며, 전용 학습된 젓가락 AI 모델이 아닙니다. 이번 웹 버전은 다양한 음식 색상을 분류하지만, 사람 피부와 비슷한 조명이나 반사색은 오분류할 수 있습니다. 영상상 음식 크기의 변화를 이용하여 들어 올리기 높이를 추정합니다. LiDAR 센서 값을 읽는 것이 아니며 실제 5cm 성공을 확증하지 않습니다.</p><p>화면 영상은 서버에 전송하거나 저장하지 않습니다. 기기 내 브라우저에서 분석하며 최초 AI 모델 다운로드에는 인터넷이 필요합니다.</p></div></details><div class="spacer"></div><div class="safe">연구용 v0.7.2 · 성공 +10점→즉시 다른 색상 미션 · 손/교구 일시 가림은 실패 아님 · 색상은 HSV 규칙 기반 · 실제 높이 측정 아님</div></aside></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),video=$('video'),canvas=$('overlay'),ctx=canvas.getContext('2d'),stage=$('stage');
+const celebrationCanvas=$('celebration'),fx=celebrationCanvas.getContext('2d');
+const V='1.2.3',CDNS=['https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@','https://unpkg.com/@mediapipe/tasks-vision@'];
+const SOURCE={x:.07,y:.16,w:.56,h:.72},TARGET={x:.58,y:.16,w:.36,h:.72};
+const COLOR_NAMES={red:'빨강',blue:'파랑',green:'초록',yellow:'노랑',purple:'보라'};
+const COLOR_HEX={red:'#ff6868',blue:'#5daeff',green:'#4ee5a0',yellow:'#ffe379',purple:'#d59aff'};
+const COLOR_KEYS=Object.keys(COLOR_NAMES);
+let targetFoodColor='red',visibleColorKeys=[],targetRound=0,foodMissCount=0,foodLastSeenAt=0,heldFood=null,toolMissingSince=0;
+let lastCompletedColor=null,awaitingAlternate=false,colorRoundNumber=1;
+function labelTarget(){let color=gameMode==='flip'?'red':targetFoodColor;$('targetLabel').textContent=COLOR_NAMES[color];$('targetLabel').style.color=COLOR_HEX[color];$('targetState').textContent=COLOR_NAMES[color];}
+function chooseTarget(nextRound=false){
+ const selected=$('targetColor').value;
+ const rotate=nextRound && $('colorChain').checked && gameMode!=='flip';
+ if(gameMode==='flip'){targetFoodColor='red';awaitingAlternate=false;}
+ else if(rotate){
+  // Prefer visible alternate colors, but always assign a different target immediately.
+  const alternatives=visibleColorKeys.filter(c=>COLOR_KEYS.includes(c)&&c!==lastCompletedColor);
+  // Assign a distinct next color immediately even if it is temporarily occluded.
+  // The detection stage waits for that color to appear, but target assignment never waits for release.
+  const lastIndex=COLOR_KEYS.indexOf(lastCompletedColor);
+  const ordered=COLOR_KEYS.slice(lastIndex+1).concat(COLOR_KEYS.slice(0,lastIndex+1));
+  targetFoodColor=ordered.find(c=>alternatives.includes(c))||ordered[0];
+  awaitingAlternate=false;colorRoundNumber++;
+ }else if(selected!=='auto'){targetFoodColor=selected;awaitingAlternate=false;}
+ else {
+  const candidates=visibleColorKeys.filter(c=>COLOR_KEYS.includes(c));
+  if(candidates.length){if(nextRound)targetRound++;targetFoodColor=candidates[targetRound%candidates.length]}
+  else targetFoodColor='red';
+  awaitingAlternate=false;
+ }
+ previousFood=null;foodHold=0;foodMissCount=0;heldFood=null;labelTarget();
+ $('colorChainStatus').textContent=gameMode==='flip'?'뒤집기는 빨강→파랑으로 진행합니다.':$('colorChain').checked?'연속 미션 '+colorRoundNumber+'회차 · '+COLOR_NAMES[targetFoodColor]+' 음식을 집어 주세요.':'색상 자동 교체 꺼짐';
+ return true;
+}
+$('targetColor').addEventListener('change',()=>{if(sessionActive){msg('게임이 끝난 후 목표 색상을 변경해 주세요.');$('targetColor').value='auto';return;}targetRound=0;lastCompletedColor=null;colorRoundNumber=1;chooseTarget(false);reset();});
+$('colorChain').addEventListener('change',()=>{if(sessionActive){$('colorChain').checked=!$('colorChain').checked;msg('연속 색상 설정은 게임 시작 전에 변경해 주세요.');return;}chooseTarget(false);});
+const GAME_NAMES={lift:'음식 집어 올리기',transfer:'음식 옮겨 놓기',flip:'음식 뒤집어 놓기'};let gameMode='lift',gameEpoch=0,transferFrames=0,flipFrames=0,flipBlueSeen=false,flipStartColor='red';
+const work=document.createElement('canvas'),wc=work.getContext('2d',{willReadFrequently:true});let FW=320,FH=180,W=960,H=540,mask=null;
+let stream=null,detector=null,HandLandmarker,FilesetResolver,running=false,starting=false,aiBusy=false,lastFrame=-1,hand=[],food=null,previousFood=null,feat=null,rods=[],product=null,productRaw=null,phase='READY',score=0;
+let sessionActive=false,sessionFinished=false,sessionEndAt=0,sessionStartAt=0,sessionSeconds=60,successes=0,sessionTimerFrame=0,missionCooldown=false;
+let toolSeenAt=0, toolNearFrames=0, gripValidatedAt=0, toolLastNear=false;
+let poseCount=0,gripCount=0,carryCount=0,settleCount=0,missSince=0,missingHandSince=0,anchor=null,prev=null,maxTravel=0,baselineArea=0,baselineFrames=0,liftCm=0,liftFrames=0,voiceUnlocked=false,lastSpeak=0,lastSpeakKey='',lastMessage='',lastError='',speakOncePose=false,successTimeout=null,foodHold=0,rodHistory=[],returnFrames=0,returnLast=null,returnStartedAt=0,returnAnnounced=false;
+const links=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+function log(s){const d=document.createElement('div');d.textContent=new Date().toLocaleTimeString('ko-KR')+' · '+s;$('log').prepend(d);while($('log').childElementCount>35)$('log').lastChild.remove()}
+window.addEventListener('error',e=>log('JS 오류: '+e.message));window.addEventListener('unhandledrejection',e=>log('비동기 오류: '+(e.reason?.message||e.reason)));
+function msg(s,win=false){if(s!==lastMessage){$('message').textContent=s;$('message').className='bottom-message'+(win?' win':'');lastMessage=s}}
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),inside=(p,r)=>!!p&&p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;
+function setupGeometry(){W=video.videoWidth||960;H=video.videoHeight||540;canvas.width=W;canvas.height=H;celebrationCanvas.width=W;celebrationCanvas.height=H;stage.style.aspectRatio=W+'/'+H;sizeStage();FW=320;FH=Math.max(120,Math.round(320*H/W));work.width=FW;work.height=FH;mask=new Uint8Array(FW*FH);log('카메라 영상 '+W+'×'+H+' · 내부 영역 표시 일치');}
+// On-screen success particles: tied to food coordinates, independent of AI inference FPS.
+let celebration=null,celebrationFrame=0;
+const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
+function starPath(g,cx,cy,r,angle){g.beginPath();for(let i=0;i<10;i++){const a=angle-Math.PI/2+i*Math.PI/5,rad=i%2===0?r:r*.46;const px=cx+Math.cos(a)*rad,py=cy+Math.sin(a)*rad;if(i===0)g.moveTo(px,py);else g.lineTo(px,py)}g.closePath()}
+function clearCelebration(){celebration=null;cancelAnimationFrame(celebrationFrame);celebrationFrame=0;fx.clearRect(0,0,W,H)}
+function celebrateAtFood(toy,points=10){
+  clearCelebration();
+  // The center is a normalized camera coordinate. If temporarily occluded, use last known food location.
+  const cx=Math.max(34,Math.min(W-34,(toy?.x??.45)*W));
+  const cy=Math.max(36,Math.min(H-45,(toy?.y??.5)*H));
+  const size=Math.max(12,Math.min(W,H)*.025);
+  const particles=Array.from({length:reducedMotion?8:18},(_,i)=>{
+    const theta=i*Math.PI*2/(reducedMotion?8:18)+(i%3)*.13;
+    return {theta,speed:(.13+i%4*.035)*Math.min(W,H),radius:size*(.55+i%3*.17),delay:(i%4)*42,spin:(i%2?-1:1)*(.5+i%3*.35),color:['#ffdc5d','#fff2a5','#ffffff','#ffb74f'][i%4]};
+  });
+  celebration={cx,cy,points,particles,start:performance.now(),duration:reducedMotion?850:1750};
+  celebrationFrame=requestAnimationFrame(drawCelebration);
+}
+function drawCelebration(now){
+  fx.clearRect(0,0,W,H);
+  if(!celebration){celebrationFrame=0;return}
+  const c=celebration,t=now-c.start,duration=c.duration;
+  if(t>=duration){clearCelebration();return}
+  const p=Math.max(0,Math.min(1,t/duration));
+  fx.save();
+  // Thin ring expands from the toy, then disappears.
+  const ringAlpha=Math.max(0,(1-p*2))*.75;
+  if(ringAlpha>0){fx.globalAlpha=ringAlpha;fx.strokeStyle='#ffe17a';fx.lineWidth=Math.max(3,W/300)*(1-p*.6);fx.beginPath();fx.arc(c.cx,c.cy,Math.min(W,H)*(.055+p*.12),0,Math.PI*2);fx.stroke()}
+  for(const particle of c.particles){
+    const elapsed=Math.max(0,t-particle.delay),u=Math.min(1,elapsed/(duration-particle.delay));if(elapsed===0)continue;
+    const eased=1-Math.pow(1-u,3);
+    const drift=particle.speed*eased;
+    const x=c.cx+Math.cos(particle.theta)*drift;
+    const y=c.cy+Math.sin(particle.theta)*drift-(reducedMotion?0:Math.sin(u*Math.PI)*Math.min(W,H)*.08);
+    const alpha=Math.min(1,u*7)*Math.pow(1-u,1.2);
+    const radius=particle.radius*(.8+Math.sin(u*Math.PI)*.4);
+    fx.globalAlpha=alpha;fx.fillStyle=particle.color;fx.shadowColor=particle.color;fx.shadowBlur=radius*.9;
+    starPath(fx,x,y,radius,particle.theta+u*Math.PI*particle.spin);fx.fill();
+  }
+  fx.shadowBlur=0;
+  const labelStart=.08,labelEnd=.92;
+  if(p>=labelStart&&p<=labelEnd){
+    const q=(p-labelStart)/(labelEnd-labelStart),fade=Math.min(1,q*8,(1-q)*5);
+    fx.globalAlpha=Math.max(0,fade);
+    const rise=Math.min(W,H)*(.09+.15*q);
+    const textSize=Math.max(32,Math.min(W,H)*.105);
+    fx.font=`900 ${textSize}px system-ui,-apple-system,sans-serif`;
+    fx.textAlign='center';fx.textBaseline='middle';
+    fx.shadowColor='#463b08';fx.shadowBlur=textSize*.3;fx.lineWidth=Math.max(4,textSize*.13);fx.strokeStyle='#5f4610';
+    const label=`+${c.points} ★`;
+    const ty=Math.max(textSize*.75,c.cy-rise);
+    fx.strokeText(label,c.cx,ty);fx.fillStyle='#fff4b0';fx.fillText(label,c.cx,ty);
+  }
+  fx.restore();
+  celebrationFrame=requestAnimationFrame(drawCelebration);
+}
+function sizeStage(){const region=document.querySelector('.camera-space');if(!region)return;const rect=region.getBoundingClientRect();const ratio=W/H;let width=Math.min(rect.width,rect.height*ratio),height=width/ratio;stage.style.width=Math.max(1,width)+'px';stage.style.height=Math.max(1,height)+'px'}window.addEventListener('resize',sizeStage);window.addEventListener('orientationchange',()=>setTimeout(sizeStage,300));
+function voices(){if(!('speechSynthesis'in window))return;let all=speechSynthesis.getVoices().filter(v=>(v.lang||'').toLowerCase().startsWith('ko'));let s=$('voiceSelect'),old=s.value;s.innerHTML='<option value="">기기 한국어 기본 음성</option>';for(let v of all){let o=document.createElement('option');o.value=v.voiceURI;o.textContent=v.name+' ('+v.lang+')';s.appendChild(o)}if(all.some(v=>v.voiceURI===old))s.value=old;}
+if('speechSynthesis'in window){voices();speechSynthesis.onvoiceschanged=voices;}
+$('rate').oninput=()=>$('rateText').textContent=Number($('rate').value).toFixed(2);
+function say(text,key,urgent=false){if(!voiceUnlocked||!$('voice').checked||!('speechSynthesis'in window))return;const now=Date.now();if(!urgent&&now-lastSpeak<4700)return;if(key===lastSpeakKey&&now-lastSpeak<19000)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=Number($('rate').value);u.pitch=1.07;const all=speechSynthesis.getVoices(),chosen=all.find(v=>v.voiceURI===$('voiceSelect').value)||all.find(v=>v.lang.toLowerCase()==='ko-kr')||all.find(v=>v.lang.toLowerCase().startsWith('ko'));if(chosen)u.voice=chosen;u.onerror=e=>log('음성 재생 오류: '+e.error);speechSynthesis.speak(u);lastSpeak=now;lastSpeakKey=key;$('coach').textContent='🔊 '+text;}catch(e){log('음성 실패: '+e.message)}}
+$('testvoice').onclick=()=>{voiceUnlocked=true;lastSpeak=0;lastSpeakKey='';say('잘했어요! 우리 함께 젓가락 연습을 시작해 볼까요?','test',true)};
+function setPhase(s){if(phase===s)return;phase=s;const names={READY:'집기 준비',GRIPPED:'집기 후보',CARRYING:'들어 올리기',SETTLING:'높이 확인',SUCCESS:'보상 획득',RETURNING:'다음 미션 준비',COLOR_WAIT:'다른 색상 대기',FINISHED:'시간 종료'};const progress={READY:0,GRIPPED:25,CARRYING:65,SETTLING:85,SUCCESS:100,RETURNING:90,COLOR_WAIT:0,FINISHED:100};$('phase').textContent=names[s];$('bar').style.width=progress[s]+'%';log('미션 단계: '+names[s]);}
+function gameInstructions(){const name=COLOR_NAMES[targetFoodColor]||'지정된';return gameMode==='transfer'?`A 영역의 ${name} 음식을 B 영역으로 옮겨 놓으세요.`:gameMode==='flip'?'빨간 면이 위로 온 음식 장난감을 파란 면으로 뒤집으세요.':`${name} 음식을 젓가락으로 약 5cm 들어 올려 보세요.`;}
+function setGameMode(next,source='menu'){
+ if(!GAME_NAMES[next])return false;
+ if(sessionActive){$('ocrStatus').textContent='게임 중에는 변경할 수 없어요. 시간 종료 후 전환하세요.';return false}
+ gameMode=next;gameEpoch++;lastCompletedColor=null;colorRoundNumber=1;chooseTarget(false);sessionFinished=false;$('sessionEnd').classList.remove('show');
+ if(next==='transfer'){Object.assign(SOURCE,{x:.06,y:.16,w:.37,h:.72});}else{Object.assign(SOURCE,{x:.07,y:.16,w:.56,h:.72})}
+ for(const b of document.querySelectorAll('.mode-btn'))b.classList.toggle('active',b.dataset.mode===next);
+ $('modeBadge').textContent=GAME_NAMES[next];$('modeDescription').textContent=gameInstructions();
+ reset();$('returnHint').textContent='미션 준비 중';$('sessionHelp').textContent='게임 선택됨 · 제한시간을 설정해 시작하세요.';
+ $('ocrStatus').textContent=(source==='ocr'?'✅ A4 글자 인식: ':'선택됨: ')+GAME_NAMES[next];log('게임 변경 '+GAME_NAMES[next]+' ('+source+')');return true
+}
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>setGameMode(b.dataset.mode)));
+// OCR is loaded only when scanning; Korean data and WASM download may take time on iPhone.
+let ocrWorker=null,ocrLoading=null,ocrBusy=false,ocrLastAt=0,ocrLastCandidate='',ocrMatchCount=0;
+function classifyGameText(text){const t=(text||'').replace(/[\s.,!?·:：\-_]/g,'');
+ if(/(뒤집|뒤집어|앞뒤|양면|뒤집기)/.test(t))return 'flip';
+ if(/(옮겨|옮기|A에서B|AB영역|이동)/i.test(t))return 'transfer';
+ if(/(집어올리|들어올리|올리기|들기)/.test(t))return 'lift';
+ return null}
+function loadOCRScript(){return new Promise((resolve,reject)=>{if(window.Tesseract){resolve();return}let script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';script.onload=resolve;script.onerror=()=>reject(Error('OCR 라이브러리를 다운로드하지 못했습니다.'));document.head.appendChild(script)})}
+async function initializeOCR(){if(ocrWorker)return ocrWorker;if(!ocrLoading)ocrLoading=(async()=>{await loadOCRScript();ocrWorker=await window.Tesseract.createWorker('kor',1,{logger:()=>{}});return ocrWorker})();try{return await ocrLoading}catch(e){ocrLoading=null;throw e}}
+async function scanA4(manual=false){if(!running||video.readyState<2){$('ocrStatus').textContent='카메라를 먼저 켜 주세요.';return}if(ocrBusy||sessionActive)return;
+ ocrBusy=true;ocrLastAt=performance.now();const initialEpoch=gameEpoch;$('ocrStatus').textContent='한글 OCR 인식 중… (처음에는 언어 파일 다운로드가 필요합니다)';$('ocrScan').disabled=true;
+ try{const worker=await initializeOCR();const pic=document.createElement('canvas');pic.width=1024;pic.height=Math.max(576,Math.round(1024*(video.videoHeight/video.videoWidth)));const pctx=pic.getContext('2d');pctx.drawImage(video,0,0,pic.width,pic.height);
+ // Extract text from the full frame; A4 placement need not align with a fixed overlay.
+ const response=await worker.recognize(pic),recognized=(response.data?.text||'').trim(),next=classifyGameText(recognized);
+ if(sessionActive||initialEpoch!==gameEpoch){$('ocrStatus').textContent='인식 도중 게임 상태가 바뀌어 결과를 적용하지 않았습니다.';return}
+ if(!next){ocrLastCandidate='';ocrMatchCount=0;$('ocrStatus').textContent='게임명 미검출: A4 글자를 더 크게 비춰 주세요.';return}
+ if(manual){setGameMode(next,'ocr');return}
+ if(ocrLastCandidate===next)ocrMatchCount++;else{ocrLastCandidate=next;ocrMatchCount=1}
+ if(ocrMatchCount>=2){setGameMode(next,'ocr');ocrMatchCount=0}else $('ocrStatus').textContent='인식 후보: '+GAME_NAMES[next]+' · 다음 스캔에서 재확인';
+ }catch(e){$('ocrStatus').textContent='OCR 오류: '+e.message+' · 메뉴로 직접 선택하세요.';log('OCR 오류 '+e.message)}finally{ocrBusy=false;$('ocrScan').disabled=false}}
+$('ocrScan').addEventListener('click',()=>scanA4(true));
+setInterval(()=>{if(running&&!sessionActive&&!sessionFinished&&$('autoOcr').checked&&!ocrBusy&&performance.now()-ocrLastAt>15000)scanA4(false)},4000);
+function fmtTime(s){const n=Math.max(0,Math.ceil(s));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
+function updateSessionUI(){let remains=sessionActive?Math.max(0,(sessionEndAt-performance.now())/1000):(sessionFinished?0:sessionSeconds);$('timeLeft').textContent=fmtTime(remains);$('missionCount').textContent=successes+'회';$('score').textContent=score;$('sessionDuration').disabled=sessionActive;$('startSession').disabled=!running||!detector||sessionActive;$('startSession').textContent=sessionActive?'⏳ 게임 진행 중':sessionFinished?'↻ 다시 시작하기':'▶ 제한시간 게임 시작';}
+function sessionTick(){if(!sessionActive){sessionTimerFrame=0;return;}if(performance.now()>=sessionEndAt){finishSession();return;}updateSessionUI();sessionTimerFrame=requestAnimationFrame(sessionTick)}
+function finishSession(){if(!sessionActive)return;sessionActive=false;sessionFinished=true;cancelAnimationFrame(sessionTimerFrame);clearTimeout(successTimeout);missionCooldown=false;setPhase('FINISHED');$('resultDuration').textContent='제한시간 '+fmtTime(sessionSeconds);$('resultScore').textContent=score+'점';$('resultMissions').textContent='미션 성공 '+successes+'회';$('sessionEnd').classList.add('show');$('sessionHelp').textContent='게임 종료 · 다시 도전할 수 있습니다.';msg('⏰ 시간이 끝났어요! '+successes+'회 성공, 최종 '+score+'점',true);say('시간이 끝났어요! '+successes+'번 성공했어요. 참 잘했어요!','finish',true);updateSessionUI();log('제한시간 종료 · 성공 '+successes+'회 · '+score+'점');}
+function beginSession(){if(!running||!detector){msg('카메라와 AI가 준비된 뒤 시작해 주세요.');return;}clearTimeout(successTimeout);sessionActive=false;cancelAnimationFrame(sessionTimerFrame);sessionSeconds=Number($('sessionDuration').value)||60;sessionStartAt=performance.now();sessionEndAt=sessionStartAt+sessionSeconds*1000;sessionFinished=false;successes=0;score=0;missionCooldown=false;lastCompletedColor=null;colorRoundNumber=1;awaitingAlternate=false;chooseTarget(false);$('sessionEnd').classList.remove('show');reset();sessionActive=true;updateSessionUI();$('sessionHelp').textContent=gameInstructions();say('시작해 볼까요? '+gameInstructions(),'session',true);sessionTimerFrame=requestAnimationFrame(sessionTick);log('제한시간 게임 시작 '+sessionSeconds+'초')}
+$('sessionDuration').onchange=()=>{sessionSeconds=Number($('sessionDuration').value);updateSessionUI()};
+$('startSession').onclick=beginSession;$('playAgain').onclick=beginSession;
+function reset(preserveCelebration=false){if(!preserveCelebration)clearCelebration();clearTimeout(successTimeout);setPhase('READY');anchor=null;prev=null;poseCount=gripCount=carryCount=settleCount=0;toolSeenAt=0;toolNearFrames=0;gripValidatedAt=0;toolLastNear=false;missSince=missingHandSince=0;maxTravel=0;baselineArea=0;baselineFrames=0;liftCm=0;liftFrames=0;returnFrames=0;returnLast=null;returnStartedAt=0;returnAnnounced=false;$('returnHint').textContent='성공 즉시 다음 색상으로 자동 전환';$('returnHint').classList.remove('active');$('heightEstimate').textContent='기준값 대기';speakOncePose=false;foodHold=0;previousFood=null;transferFrames=flipFrames=0;flipBlueSeen=false;msg(gameInstructions())}
+function nextMission(){
+ if(!sessionActive)return;
+ const stableFood=food?{...food}:null;
+ clearTimeout(successTimeout);missionCooldown=false;reset(true);
+ const chosen=chooseTarget(true);
+ if(!chosen){
+  msg('🎨 다음 미션 준비! '+COLOR_NAMES[lastCompletedColor]+' 말고 다른 색상 음식을 보여주세요.');
+  $('returnHint').textContent='지정된 다음 색상 음식이 보일 때까지 대기';
+  say('좋아요! 이제 다른 색상 음식을 찾아볼까요?','nextColor',true);
+  log('다른 색상 음식 인식 대기');return;
+ }
+ if(stableFood&&stableFood.color===targetFoodColor){baselineArea=stableFood.n;baselineFrames=8;previousFood={x:stableFood.x,y:stableFood.y};}
+ msg('🎯 다음 미션! '+gameInstructions());
+ $('returnHint').textContent='새로운 색상 미션 진행 중 · 이전 색상 재득점 방지';
+ say(COLOR_NAMES[targetFoodColor]+' 음식을 집어 올려 보세요!','colorRound'+colorRoundNumber,true);
+ log('성공 보상 직후 '+COLOR_NAMES[targetFoodColor]+' 색상 미션 시작');
+}
+// Return gate: success does not automatically reset after a timer. Food must be resting and separated.
+// Overhead camera cannot establish real 3D contact; separations below are visual proxies.
+function evaluateReturn(t){
+ if(!sessionActive||phase!=='RETURNING')return;
+ if(gameMode==='transfer'||gameMode==='flip'){
+   const resting=!!(food&&returnLast&&dist(food,returnLast)<.009);
+   const separated=!!(food&&((feat&&dist(feat.center,food)>Math.max(.14,feat.palm*1.65))||(!feat&&t-returnStartedAt>1200)));
+   const ready=gameMode==='transfer'?!!(food&&inside(food,TARGET)):!!(food&&food.color==='blue');
+   if(ready&&resting&&separated)returnFrames++;else returnFrames=Math.max(0,returnFrames-2);
+   returnLast=food?{...food}:null;
+   $('returnHint').textContent=ready?'음식에서 젓가락을 떼고 안정적으로 놓아 주세요':'음식을 목표 상태로 놓아 주세요';
+   if(returnFrames>=9&&t-returnStartedAt>800)nextMission();return;
+ }
+ const areaRatio=food&&baselineArea>8?food.n/baselineArea:0;
+ const areaResting=areaRatio>.78&&areaRatio<1.28;
+ const inStart=!!(food&&inside(food,SOURCE));
+ const positionStable=!!(food&&returnLast&&dist(food,returnLast)<.008);
+ const fromGripFar=!!(food&&feat&&dist(feat.center,food)>Math.max(.16,feat.palm*2.0));
+ // Both visible rod tips away from the food are additional evidence, never a prerequisite.
+ const rodsSeparated=!!(food&&((product?.hasTwoTips&&!product.stale&&[product.tipA,product.tipB].every(t=>dist(t,food)>Math.max(.09,food.radius*3.4)))||(rods.length===2&&rods.every(r=>Math.min(dist(r.a,food),dist(r.b,food))>Math.max(.07,food.radius*3.2)))));
+ // If the hand AND rods leave the frame, treat sustained clear food as lower-confidence release evidence.
+ const emptyArea=!!(!feat&&!product&&rods.length===0&&t-returnStartedAt>1800);
+ const separated=fromGripFar||rodsSeparated||emptyArea;
+ if(inStart&&areaResting&&positionStable&&separated){returnFrames++}else returnFrames=Math.max(0,returnFrames-2);
+ returnLast=food?{x:food.x,y:food.y}:null;
+ let needed=emptyArea&&!fromGripFar&&!rodsSeparated?18:10;
+ $('returnHint').textContent=!food?'장난감 음식을 카메라에 보여주세요':!areaResting?'음식을 매트 위에 완전히 내려놓으세요':!inStart?'시작 영역 안에 음식을 놓아주세요':!separated?'젓가락을 음식에서 충분히 떼어 주세요':`분리 확인 중 ${Math.min(100,Math.round(returnFrames/needed*100))}%`;
+ if(returnFrames>=needed&&t-returnStartedAt>900){$('returnHint').textContent='분리 확인 완료';nextMission();}
+}
+$('reset').onclick=()=>{if(sessionFinished){$('sessionEnd').classList.remove('show');sessionFinished=false;}reset();updateSessionUI()};
+function withTimeout(p,ms,label){return Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(Error(label+' 시간 초과')),ms))])}
+async function initAI(){if(detector||aiBusy)return;aiBusy=true;$('retry').disabled=true;try{$('status').textContent='1/3 AI 라이브러리 다운로드 중';let pkg,err;for(const c of CDNS){try{pkg=await withTimeout(import(c+V+'/vision_bundle.mjs'),18000,'AI 모듈');break}catch(e){err=e;log('AI CDN: '+e.message)}}if(!pkg)throw err;HandLandmarker=pkg.HandLandmarker;FilesetResolver=pkg.FilesetResolver;$('status').textContent='2/3 WASM 준비 중';let vision;for(const c of CDNS){try{vision=await withTimeout(FilesetResolver.forVisionTasks(c+V+'/wasm'),18000,'WASM');break}catch(e){err=e;log('WASM: '+e.message)}}if(!vision)throw err;$('status').textContent='3/3 손 추적 모델 로딩 중';detector=await withTimeout(HandLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.55,minTrackingConfidence:.55}),30000,'손 모델');$('status').textContent='✅ 카메라 및 손 AI 정상';log('AI 실행 준비 완료');updateSessionUI();$('sessionHelp').textContent='AI 준비 완료 · 제한시간을 설정하고 시작하세요.'}catch(e){$('status').textContent='❌ AI 로딩 오류: '+e.message;log(e.stack||e.message)}finally{aiBusy=false;$('retry').disabled=false}}
+async function start(){if(starting||stream)return;starting=true;$('start').disabled=true;try{if(!isSecureContext||!navigator.mediaDevices?.getUserMedia)throw Error('HTTPS에서 Safari로 실행해 주세요.');stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});video.srcObject=stream;video.muted=true;video.setAttribute('playsinline','');await video.play();setupGeometry();running=true;stage.classList.add('ready');reset();updateSessionUI();$('status').textContent='카메라 정상 · AI 연결 중';requestAnimationFrame(loop);initAI()}catch(e){log('카메라 오류: '+e.message);$('status').textContent='카메라 오류: '+e.message;stream?.getTracks().forEach(t=>t.stop());stream=null;$('start').disabled=false}finally{starting=false}}
+$('start').onclick=start;$('retry').onclick=()=>{if(!stream){msg('먼저 카메라를 시작해 주세요.');return}detector=null;initAI()};$('stop').onclick=()=>{sessionActive=false;sessionFinished=false;cancelAnimationFrame(sessionTimerFrame);clearTimeout(successTimeout);$('sessionEnd').classList.remove('show');clearCelebration();product=null;productSmooth=null;running=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;stage.classList.remove('ready');$('start').disabled=false;ctx.clearRect(0,0,W,H);window.speechSynthesis?.cancel();$('status').textContent='카메라 종료';reset();updateSessionUI()};
+$('copy').onclick=async()=>{const s=[...$('log').children].reverse().map(x=>x.textContent).join('\n')+'\n'+$('status').textContent+'\n'+navigator.userAgent;try{await navigator.clipboard.writeText(s)}catch{prompt('진단 기록 복사',s)}};
+$('mirror').onchange=()=>{video.style.transform=canvas.style.transform=celebrationCanvas.style.transform=$('mirror').checked?'scaleX(-1)':'none'};
+// Hand exclusion mask: all joint disks and the segments between them, expanded to keep reddish skin out of red-toy candidates.
+function makeHandMask(p){mask.fill(0);if(p.length!==21)return;const segments=[[0,5],[0,9],[0,13],[0,17],...links];const radius=Math.max(9,Math.round(FW*dist(p[0],p[9])*.24));function disk(x,y,r){let x0=Math.max(0,Math.floor(x-r)),x1=Math.min(FW-1,Math.ceil(x+r)),y0=Math.max(0,Math.floor(y-r)),y1=Math.min(FH-1,Math.ceil(y+r));for(let yy=y0;yy<=y1;yy++)for(let xx=x0;xx<=x1;xx++)if((xx-x)**2+(yy-y)**2<=r*r)mask[yy*FW+xx]=1}
+for(let [a,b] of segments){const pa=p[a],pb=p[b],dx=(pb.x-pa.x)*FW,dy=(pb.y-pa.y)*FH,len=Math.hypot(dx,dy);let steps=Math.max(1,Math.ceil(len/4));for(let k=0;k<=steps;k++)disk(pa.x*FW+dx*k/steps,pa.y*FH+dy*k/steps,radius)}for(let a of p)disk(a.x*FW,a.y*FH,radius)}
+// HSV classification with a separate component per color. Orange/peach is intentionally excluded.
+function classifyFoodColor(r,g,b){
+ const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+ if(mx<75||d<55||d/mx<.47)return null;
+ // Bright red needs a strong red-blue and red-green separation: avoid skin.
+ let h=0;if(d){if(mx===r)h=(60*((g-b)/d)+360)%360;else if(mx===g)h=60*((b-r)/d+2);else h=60*((r-g)/d+4)}
+ if((h>=350||h<=10)&&r>140&&r-g>75&&r-b>70)return 'red';
+ if(h>=195&&h<=257&&b>112)return 'blue';
+ if(h>=75&&h<=170&&g>95)return 'green';
+ if(h>=42&&h<=69&&r>140&&g>115&&b<Math.min(r,g)*.65)return 'yellow';
+ if(h>=262&&h<=334&&b>90)return 'purple';
+ return null;
+}
+function scanColorComponents(d,color){
+ const binary=new Uint8Array(FW*FH);
+ for(let y=2;y<FH-2;y++)for(let x=2;x<FW-2;x++){
+   const i=y*FW+x,j=i*4;if(mask[i])continue;
+   if(classifyFoodColor(d[j],d[j+1],d[j+2])===color)binary[i]=1;
+ }
+ const seen=new Uint8Array(FW*FH),q=new Int32Array(FW*FH),found=[];
+ for(let i=0;i<binary.length;i++){
+   if(!binary[i]||seen[i])continue;
+   let read=0,write=0,sx=0,sy=0,minx=FW,maxx=0,miny=FH,maxy=0;
+   seen[i]=1;q[write++]=i;
+   while(read<write){const k=q[read++],x=k%FW,y=(k/FW)|0;sx+=x;sy+=y;
+      minx=Math.min(minx,x);maxx=Math.max(maxx,x);miny=Math.min(miny,y);maxy=Math.max(maxy,y);
+      for(const n of [k-1,k+1,k-FW,k+FW]){if(n<0||n>=binary.length||seen[n]||!binary[n]||Math.abs(n%FW-x)>1)continue;seen[n]=1;q[write++]=n}}
+   const area=write,fw=(maxx-minx+1)/FW,fh=(maxy-miny+1)/FH;
+   if(area<32||area>FW*FH*.07||fw>.26||fh>.37)continue;
+   const c={x:sx/area/FW,y:sy/area/FH,n:area,radius:Math.sqrt(area/Math.PI)/FW,color};
+   found.push(c);
+ }
+ found.sort((a,b)=>b.n-a.n);return found;
+}
+function detectFood(now){
+ wc.drawImage(video,0,0,FW,FH);const d=wc.getImageData(0,0,FW,FH).data;
+ const found={};for(const color of COLOR_KEYS)found[color]=scanColorComponents(d,color);
+ const present=COLOR_KEYS.filter(c=>found[c].some(o=>inside(o,SOURCE)||gameMode==='transfer'&&inside(o,TARGET)));
+ // Stabilize the seen-color list to prevent a single missing frame from changing random missions.
+ const state=detectFood.colorSeen||(detectFood.colorSeen={});for(const c of COLOR_KEYS)state[c]=present.includes(c)?Math.min(12,(state[c]||0)+2):Math.max(0,(state[c]||0)-1);
+ visibleColorKeys=COLOR_KEYS.filter(c=>state[c]>=4);
+ $('visibleColors').textContent=visibleColorKeys.length?' · 감지: '+visibleColorKeys.map(c=>COLOR_NAMES[c]).join(' / '):' · 감지된 음식 없음';
+ if($('targetColor').value==='auto'&&!sessionActive&&gameMode!=='flip'&&visibleColorKeys.length&&!visibleColorKeys.includes(targetFoodColor))chooseTarget(false);
+ const candidates=gameMode==='flip'&&(phase==='GRIPPED'||phase==='CARRYING'||phase==='SETTLING'||phase==='RETURNING')
+   ?found.red.concat(found.blue):found[gameMode==='flip'?'red':targetFoodColor];
+ const best=candidates.sort((a,b)=>{
+   const sa=a.n+(previousFood&&dist(a,previousFood)<.18?4000:0)+(a.color===targetFoodColor?500:0);
+   const sb=b.n+(previousFood&&dist(b,previousFood)<.18?4000:0)+(b.color===targetFoodColor?500:0);
+   return sb-sa;
+ })[0]||null;
+ if(best){previousFood={x:best.x,y:best.y};foodHold=0;foodMissCount=0;foodLastSeenAt=now;heldFood={...best};}
+ else{foodHold++;foodMissCount++;if(foodHold>24)previousFood=null;}
+ // Do not synthesize a fake position/size for scoring when occluded.
+ return {food:best,data:d,red:found.red[0]||null,blue:found.blue[0]||null,objects:found};
+}
+function features(p){if(p.length!==21)return null;let palm=Math.max(.024,dist(p[0],p[9])),center={x:(p[4].x+p[8].x+p[12].x)/3,y:(p[4].y+p[8].y+p[12].y)/3},ti=dist(p[4],p[8])/palm,tm=dist(p[4],p[12])/palm,im=dist(p[8],p[12])/palm;return {palm,center,close:ti<.92&&tm<1.5,plausible:ti>.11&&ti<1.6&&im<1.5&&dist(p[8],p[0])/palm>.49,ti}}
+// Two separate line *candidates* extracted only from a local region beyond the fingertips. Not a trained chopstick detector.
+function detectRods(data,f){let pts=[],x0=f?Math.max(0,Math.floor((f.center.x-.26)*FW)):0,x1=f?Math.min(FW-1,Math.ceil((f.center.x+.30)*FW)):FW-1,y0=f?Math.max(0,Math.floor((f.center.y-.28)*FH)):0,y1=f?Math.min(FH-1,Math.ceil((f.center.y+.28)*FH)):FH-1;for(let y=y0;y<=y1;y+=2)for(let x=x0;x<=x1;x+=2){let i=y*FW+x,j=i*4;let r=data[j],g=data[j+1],b=data[j+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);if(Math.min(r,g,b)<172||mx-mn>48||classifyFoodColor(r,g,b)!==null)continue; // bright near-white pixels, including near hand silhouette
+pts.push({x:x/FW,y:y/FH})}if(pts.length<15)return[];
+const results=[],remaining=pts.slice();for(let pass=0;pass<2;pass++){let best=null;for(let t=0;t<65;t++){let a=remaining[(t*67+3)%remaining.length],b=remaining[(t*113+17)%remaining.length],dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);if(length<.09)continue;let hits=[],lo=1e9,hi=-1e9;for(let k=0;k<remaining.length;k++){let p=remaining[k],offset=((p.x-a.x)*dy-(p.y-a.y)*dx)/length,proj=((p.x-a.x)*dx+(p.y-a.y)*dy)/length;if(Math.abs(offset)<.009){hits.push(k);lo=Math.min(lo,proj);hi=Math.max(hi,proj)}}let span=hi-lo;if(hits.length>=8&&span>.115&&(!best||hits.length*span>best.quality))best={a:{x:a.x+dx/length*lo,y:a.y+dy/length*lo},b:{x:a.x+dx/length*hi,y:a.y+dy/length*hi},quality:hits.length*span,hits,dx:dx/length,dy:dy/length,span}}if(!best)break;
+// Refuse two candidates sharing essentially the same line.
+if(results.length){let old=results[0],ang=Math.abs(best.dx*old.dx+best.dy*old.dy),sep=Math.min(dist(best.a,old.a),dist(best.a,old.b),dist(best.b,old.a),dist(best.b,old.b));if(ang<.7||sep<.025)break}
+results.push(best);const remove=new Set(best.hits);const left=remaining.filter((_,i)=>!remove.has(i));remaining.splice(0,remaining.length,...left);if(remaining.length<15)break}return results}
+
+// v0.7.2: dedicated connected-product silhouette estimator for the user's white one-piece training chopsticks.
+// No separately trained AI model is embedded: all product results are heuristic hypotheses.
+let lastProductSeenAt=0, productSmooth=null;let calibratedProduct=null;
+$('calibrateProduct').addEventListener('click',()=>{
+ if(!running||!product||product.stale||!product.hasTwoTips||product.score<.48){
+  $('calibrationNote').textContent='교구 두 집게 끝을 먼저 카메라에 선명하게 보여주세요. 인식된 뒤 다시 등록하세요.';return;
+ }
+ calibratedProduct={span:product.span,gap:product.gap,area:product.area};
+ $('calibrationNote').textContent=`교구 기준 등록 완료 · 두 끝점과 몸체 형태의 상대 비율을 참고합니다 (기계학습 아님)`;
+ log('교구 실시간 보정 기준 설정');
+});
+const productDistance=(a,b)=>a&&b?Math.hypot(a.x-b.x,a.y-b.y):Infinity;
+function detectTrainingProduct(pixels,now){
+  const N=FW*FH,white=new Uint8Array(N),visited=new Uint8Array(N),queue=new Int32Array(N);
+  // Background should be dark and matte. Reject skin-colored and saturated pixels.
+  // A relatively high minimum RGB threshold preserves ivory/white printed plastic.
+  for(let y=3;y<FH-3;y++)for(let x=3;x<FW-3;x++){
+    const i=y*FW+x,j=i*4,r=pixels[j],g=pixels[j+1],b=pixels[j+2];
+    const min=Math.min(r,g,b),max=Math.max(r,g,b);
+    if(min>=169&&max-min<=51&&max>=189)white[i]=1;
+  }
+  // Collect coherent white product components, suppress little bright scratches.
+  const blobs=[];
+  for(let idx=0;idx<N;idx++){
+    if(!white[idx]||visited[idx])continue;
+    let rd=0,wr=0,sx=0,sy=0,sxx=0,sxy=0,syy=0,minx=FW,miny=FH,maxx=0,maxy=0;
+    let pixelsList=[];queue[wr++]=idx;visited[idx]=1;
+    while(rd<wr){
+      let at=queue[rd++],x=at%FW,y=(at/FW)|0;
+      sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;syy+=y*y;
+      minx=Math.min(minx,x);maxx=Math.max(maxx,x);miny=Math.min(miny,y);maxy=Math.max(maxy,y);
+      pixelsList.push(at);
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        if(!dx&&!dy)continue;let xx=x+dx,yy=y+dy;
+        if(xx<0||xx>=FW||yy<0||yy>=FH)continue;
+        const n=yy*FW+xx;if(white[n]&&!visited[n]){visited[n]=1;queue[wr++]=n;}
+      }
+    }
+    if(wr<46||wr>N*.32)continue;
+    const mx=sx/wr,my=sy/wr,cxx=sxx/wr-mx*mx,cxy=sxy/wr-mx*my,cyy=syy/wr-my*my;
+    const alpha=.5*Math.atan2(2*cxy,cxx-cyy);let vx=Math.cos(alpha),vy=Math.sin(alpha),ux=-vy,uy=vx;
+    const eig1=(cxx+cyy)/2+Math.sqrt((cxx-cyy)**2/4+cxy*cxy),eig2=(cxx+cyy)/2-Math.sqrt((cxx-cyy)**2/4+cxy*cxy);
+    if(eig1/Math.max(1,eig2)<2.2)continue;
+    let minT=Infinity,maxT=-Infinity,minU=Infinity,maxU=-Infinity;
+    const samples=[];
+    for(const k of pixelsList){let x=k%FW,y=(k/FW)|0,t=(x-mx)*vx+(y-my)*vy,u=(x-mx)*ux+(y-my)*uy;
+      if(t<minT)minT=t;if(t>maxT)maxT=t;if(u<minU)minU=u;if(u>maxU)maxU=u;
+      samples.push({x,y,t,u});}
+    const span=maxT-minT,spread=maxU-minU;
+    if(span<FW*.14||spread<3||span/spread<1.35)continue;
+    // The connecting body is broader and occupies more pixels than the distal tips.
+    const end=.23*span;
+    const neg=samples.filter(v=>v.t<minT+end),pos=samples.filter(v=>v.t>maxT-end);
+    const range=a=>a.length?Math.max(...a.map(v=>v.u))-Math.min(...a.map(v=>v.u)):0;
+    const endMassNeg=neg.length+range(neg)*5,endMassPos=pos.length+range(pos)*5;
+    const rootAtMin=endMassNeg>=endMassPos;
+    // Axis points from the broad rear body toward the tips.
+    if(!rootAtMin){vx=-vx;vy=-vy;ux=-ux;uy=-uy;for(const v of samples){v.t=-v.t;v.u=-v.u;}}
+    let lo=Infinity,hi=-Infinity;
+    for(const v of samples){lo=Math.min(lo,v.t);hi=Math.max(hi,v.t)}
+    const rootRegion=samples.filter(v=>v.t<lo+span*.19),tipRegion=samples.filter(v=>v.t>hi-span*.24);
+    const rootX=rootRegion.reduce((sum,v)=>sum+v.x,0)/Math.max(1,rootRegion.length),rootY=rootRegion.reduce((sum,v)=>sum+v.y,0)/Math.max(1,rootRegion.length);
+    const tipUs=tipRegion.map(v=>v.u).sort((a,b)=>a-b),loU=tipUs[Math.floor(tipUs.length*.16)]??0,hiU=tipUs[Math.floor(tipUs.length*.84)]??0;
+    let left=tipRegion.filter(v=>v.u<(loU+hiU)/2),right=tipRegion.filter(v=>v.u>=(loU+hiU)/2);
+    const tipOf=list=>{if(list.length<4)return null;let tmax=Math.max(...list.map(v=>v.t));let far=list.filter(v=>v.t>tmax-Math.max(3,span*.045));return {x:far.reduce((a,v)=>a+v.x,0)/far.length/FW,y:far.reduce((a,v)=>a+v.y,0)/far.length/FH};};
+    let tipA=tipOf(left),tipB=tipOf(right);
+    const gap=tipA&&tipB?productDistance(tipA,tipB):0;
+    const normalizedSpan=span/Math.max(FW,FH),hasTwoTips=!!(tipA&&tipB&&gap>.012&&gap<.27);
+    const broadBody=rootRegion.length>tipRegion.length*.7&&range(rootRegion)>range(tipRegion)*.9;
+    const density=wr/(span*spread);
+    // Optional circular-hole cue: look for a dark enclosed island surrounded by this
+    // exact white component. Never require it, because a finger may cover the hole.
+    let holeDetected=false;
+    if(wr>280 && (maxx-minx)>18 && (maxy-miny)>18){
+      const bw=maxx-minx+3,bh=maxy-miny+3,local=new Uint8Array(bw*bh),outside=new Uint8Array(bw*bh),bfs=new Int32Array(bw*bh);
+      for(const k of pixelsList){const x=k%FW-minx+1,y=((k/FW)|0)-miny+1;local[y*bw+x]=1;}
+      let front=0,back=0;
+      const seed=k=>{if(!local[k]&&!outside[k]){outside[k]=1;bfs[back++]=k;}};
+      for(let x=0;x<bw;x++){seed(x);seed((bh-1)*bw+x)}
+      for(let y=0;y<bh;y++){seed(y*bw);seed(y*bw+bw-1)}
+      while(front<back){let k=bfs[front++],x=k%bw,y=(k/bw)|0;
+        if(x>0)seed(k-1);if(x<bw-1)seed(k+1);if(y>0)seed(k-bw);if(y<bh-1)seed(k+bw);}
+      // One or more enclosed near-root islands can represent the round hole.
+      const holeSeen=new Uint8Array(bw*bh);
+      for(let k=0;k<local.length&&!holeDetected;k++){
+        if(local[k]||outside[k]||holeSeen[k])continue;
+        let head=0,tail=0,sx=0,sy=0;const holes=new Int32Array(local.length);holes[tail++]=k;holeSeen[k]=1;
+        while(head<tail){let h=holes[head++],x=h%bw,y=(h/bw)|0;sx+=x;sy+=y;
+          for(const n of [h-1,h+1,h-bw,h+bw]){if(n<0||n>=local.length||Math.abs(n%bw-x)>1||holeSeen[n]||local[n]||outside[n])continue;holeSeen[n]=1;holes[tail++]=n;}}
+        const cx=(sx/tail+minx-1)/FW,cy=(sy/tail+miny-1)/FH;
+        if(tail>=9&&tail<550&&productDistance({x:cx,y:cy},{x:rootX/FW,y:rootY/FH})<.18)holeDetected=true;
+      }
+    }
+    const score=Math.max(0,Math.min(1,.18+Math.min(.24,normalizedSpan*.9)+Math.min(.12,wr/3200)+(broadBody?.19:0)+(hasTwoTips?.22:0)+(density>.13?.06:0)+(holeDetected?.06:0)));
+    const result={center:{x:mx/FW,y:my/FH},root:{x:rootX/FW,y:rootY/FH},tipA,tipB,gap,score,hasTwoTips,broadBody,
+      holeDetected,area:wr,span:normalizedSpan,bbox:{x:minx/FW,y:miny/FH,w:(maxx-minx)/FW,h:(maxy-miny)/FH}};
+    // Penalize components far from the last known one-piece tool or far from the hand when present.
+    const handDistance=feat?productDistance(result.root,feat.center):0;
+    const calibrationBonus=calibratedProduct?
+ Math.max(0,17-55*Math.abs(result.span-calibratedProduct.span))+
+ (result.hasTwoTips?Math.max(0,9-35*Math.abs(result.gap-calibratedProduct.gap)):0):0;
+ result.rank=score*100+calibrationBonus+Math.min(30,wr/35)-(feat&&handDistance>.48?40:0)-(productSmooth&&productDistance(result.root,productSmooth.root)>.42?20:0);
+    blobs.push(result);
+  }
+  blobs.sort((a,b)=>b.rank-a.rank);
+  const candidate=blobs[0];
+  if(candidate&&candidate.score>=.38){
+    // Slow down jitter; do not carry a product hypothesis indefinitely when hidden.
+    if(productSmooth&&productDistance(productSmooth.root,candidate.root)<.15){
+      const blend=(a,b)=>a&&b?{x:a.x*.58+b.x*.42,y:a.y*.58+b.y*.42}:b;
+      candidate.root=blend(productSmooth.root,candidate.root);
+      if(candidate.tipA&&candidate.tipB&&productSmooth.tipA&&productSmooth.tipB){
+        const direct=productDistance(candidate.tipA,productSmooth.tipA)+productDistance(candidate.tipB,productSmooth.tipB);
+        const reverse=productDistance(candidate.tipA,productSmooth.tipB)+productDistance(candidate.tipB,productSmooth.tipA);
+        if(reverse<direct)[candidate.tipA,candidate.tipB]=[candidate.tipB,candidate.tipA];
+        candidate.tipA=blend(productSmooth.tipA,candidate.tipA);candidate.tipB=blend(productSmooth.tipB,candidate.tipB);
+        candidate.gap=productDistance(candidate.tipA,candidate.tipB);
+      }
+    }
+    lastProductSeenAt=now;productSmooth=candidate;return candidate;
+  }
+  if(productSmooth&&now-lastProductSeenAt<1250)return {...productSmooth,score:Math.min(productSmooth.score*.55,.39),stale:true};
+  productSmooth=null;return null;
+}
+function productTipNearFood(p,f){if(!p?.tipA||!p?.tipB||!f||p.stale)return false;
+  const mid={x:(p.tipA.x+p.tipB.x)/2,y:(p.tipA.y+p.tipB.y)/2};
+  return productDistance(mid,f)<Math.max(.105,f.radius*4);
+}
+// Independent evidence of chopsticks gripping the toy; no hand landmarks are used.
+// This is a visual *proximity hypothesis*, not proof of physical contact.
+function evidenceOfToolAtFood(p,rodList,f){
+ if(!f)return false;
+ if(p?.hasTwoTips&&!p.stale&&p.score>=.52&&p.tipA&&p.tipB){
+   const a=dist(p.tipA,f),b=dist(p.tipB,f);
+   const midpoint={x:(p.tipA.x+p.tipB.x)/2,y:(p.tipA.y+p.tipB.y)/2};
+   const near=Math.max(.06,f.radius*3.8);
+   return dist(midpoint,f)<near && a<near*1.65 && b<near*1.65;
+ }
+ if(rodList?.length===2){
+   const ends=rodList.map(r=>dist(r.a,f)<dist(r.b,f)?r.a:r.b);
+   const mid={x:(ends[0].x+ends[1].x)/2,y:(ends[0].y+ends[1].y)/2};
+   return dist(mid,f)<Math.max(.065,f.radius*3.8)&&ends.every(t=>dist(t,f)<Math.max(.12,f.radius*6));
+ }
+ return false;
+}
+function drawProductOverlay(p){if(!p||!$('showProduct').checked)return;
+  const root=p.root,a=p.tipA,b=p.tipB;
+  ctx.save();ctx.globalAlpha=p.stale?.35:.9;
+  ctx.strokeStyle='#c4f6dc';ctx.lineWidth=Math.max(3,W/300);ctx.setLineDash([10,6]);
+  if(a&&b){ctx.beginPath();ctx.moveTo(root.x*W,root.y*H);ctx.lineTo(a.x*W,a.y*H);ctx.moveTo(root.x*W,root.y*H);ctx.lineTo(b.x*W,b.y*H);ctx.stroke();}
+  ctx.setLineDash([]);ctx.fillStyle='#5bf0b3';ctx.beginPath();ctx.arc(root.x*W,root.y*H,Math.max(7,W/170),0,2*Math.PI);ctx.fill();
+  for(const [point,label,color] of [[a,'A','#9ad3ff'],[b,'B','#ffe294']])if(point){ctx.strokeStyle=color;ctx.lineWidth=Math.max(3,W/370);ctx.beginPath();ctx.arc(point.x*W,point.y*H,Math.max(8,W/130),0,2*Math.PI);ctx.stroke();ctx.font=`bold ${Math.max(14,W/65)}px system-ui`;ctx.fillStyle=color;ctx.fillText(label,point.x*W+12,point.y*H-9)}
+  ctx.restore();
+}
+function drawZone(z,color,label){ctx.fillStyle=color+'24';ctx.fillRect(z.x*W,z.y*H,z.w*W,z.h*H);ctx.setLineDash([8,6]);ctx.strokeStyle=color;ctx.lineWidth=Math.max(2,W/450);ctx.strokeRect(z.x*W,z.y*H,z.w*W,z.h*H);ctx.setLineDash([]);let fs=Math.max(16,W/55);ctx.font=`800 ${fs}px system-ui`;ctx.fillStyle='#071b18';ctx.fillRect(z.x*W+5,z.y*H+5,fs*4.2,fs*1.45);ctx.fillStyle=color;ctx.fillText(label,z.x*W+10,z.y*H+fs+4)}
+function render(f){ctx.clearRect(0,0,W,H);drawZone(SOURCE,'#6af0b4',gameMode==='transfer'?'A 시작':gameMode==='flip'?'뒤집기 영역':'집기·들기 영역');if(gameMode==='transfer')drawZone(TARGET,'#84caff','B 목표');if(food){ctx.beginPath();ctx.arc(food.x*W,food.y*H,Math.max(15,food.radius*W),0,7);ctx.strokeStyle=COLOR_HEX[food.color]||'#ffef71';ctx.lineWidth=5;ctx.stroke();ctx.font=`bold ${Math.max(14,W/70)}px system-ui`;ctx.fillStyle='#fff';ctx.fillText(COLOR_NAMES[food.color]||'음식',food.x*W+20,food.y*H-16)}
+if(hand.length===21){ctx.strokeStyle='#56f5c5';ctx.lineWidth=Math.max(2,W/400);for(let [a,b]of links){ctx.beginPath();ctx.moveTo(hand[a].x*W,hand[a].y*H);ctx.lineTo(hand[b].x*W,hand[b].y*H);ctx.stroke()}for(let p of hand){ctx.beginPath();ctx.arc(p.x*W,p.y*H,3,0,7);ctx.fillStyle='white';ctx.fill()}}
+if($('debugRods').checked)rods.forEach((r,i)=>{ctx.beginPath();ctx.moveTo(r.a.x*W,r.a.y*H);ctx.lineTo(r.b.x*W,r.b.y*H);ctx.strokeStyle=i===0?'#f9ca7b':'#99c6ff';ctx.lineWidth=4;ctx.stroke();ctx.fillStyle='#fff';ctx.font=`700 ${Math.max(12,W/60)}px system-ui`;ctx.fillText('후보 '+(i+1),r.b.x*W+5,r.b.y*H)})
+drawProductOverlay(product)}
+function successMission(t,description){
+ if(!sessionActive||phase==='RETURNING'||phase==='SUCCESS'||phase==='FINISHED'||phase==='COLOR_WAIT'||missionCooldown)return;
+ missionCooldown=true;setPhase('SUCCESS');successes++;score=successes*10;
+ lastCompletedColor=targetFoodColor;updateSessionUI();celebrateAtFood(food||previousFood,10);
+ msg('🌟 '+description+' +10점',true);
+ say('와! 성공이에요! 다음 색상에 도전해 볼까요?','success',true);
+ $('confidence').textContent=gameMode==='lift'?'영상 기반 높이 추정 · 실제 높이 검증 아님':'영상 기반 성공 추정';
+ // No RETURNING state or release check. Immediately change the active target.
+ // The new color differs from the completed color; the old toy cannot score again.
+ // A brief cooldown merely suppresses repeated inference frames, not round selection.
+ if(gameMode!=='flip'&&$('colorChain').checked){
+   nextMission();
+ }else{
+   reset(true);
+   chooseTarget(false);
+   msg('🌟 +10점! '+gameInstructions(),true);
+ }
+ missionCooldown=true;
+ clearTimeout(successTimeout);
+ successTimeout=setTimeout(()=>{missionCooldown=false;successTimeout=null},1200);
+ log('성공 즉시 다음 미션 전환 · 이전 색상 '+COLOR_NAMES[lastCompletedColor]+' · +10점');
+}
+function update(t){if(sessionActive&&performance.now()>=sessionEndAt)finishSession();hand=detector?.detectForVideo(video,t)?.landmarks?.[0]||[];feat=features(hand);makeHandMask(hand);const data=detectFood(t);food=data.food;
+if(sessionActive&&phase==='COLOR_WAIT'&&awaitingAlternate){
+  const alternatives=visibleColorKeys.filter(c=>c!==lastCompletedColor);
+  if(alternatives.length){reset(true);if(chooseTarget(true)){msg('🎯 새로운 미션! '+gameInstructions());$('returnHint').textContent='다음 색상 미션 시작';say(COLOR_NAMES[targetFoodColor]+' 음식을 찾아 집어 주세요!','colorRound'+colorRoundNumber,true);}}
+}
+product=$('productMode').checked?detectTrainingProduct(data.data,t):null;rods=product?[]:detectRods(data.data,feat);const careful=$('sensitivity').value==='careful';$('hand').textContent=feat?'21개 감지':'손 미검출';$('food').textContent=food?COLOR_NAMES[food.color]+' 음식 추적':COLOR_NAMES[targetFoodColor]+' 음식 잠시 가림';$('trackingState').textContent=food?'실시간 추적':heldFood&&t-foodLastSeenAt<2600?'추적 보류 · 미션 유지':'음식 다시 보여주세요 · 미션 유지';$('sticks').textContent=product?(product.hasTwoTips?'연결 몸체 + 집게 2끝 추정'+(product.holeDetected?' · 구멍 단서':''):'일체형 흰색 실루엣 후보'):(rods.length+'/2 흰색 선분 후보');$('productConfidence').textContent=product?Math.round(product.score*100)+'% '+(product.stale?'(잠시 가림)':'· 형상 기반 추정'):'미검출';$('tipGap').textContent=product?.hasTwoTips?Math.round(product.gap*1000)/10+'% 화면폭 (상대값)':'끝점 미확인';$('pose').textContent=feat?(feat.plausible?'손 배치 후보 · 음성 코칭만':'자세 조정 · 음성 코칭만'):'손 미검출 · 미션 계속';
+if(sessionActive&&feat?.plausible)poseCount++;else poseCount=0;if(sessionActive&&phase==='READY'&&poseCount>=10&&!speakOncePose){speakOncePose=true;if(product?.hasTwoTips&&product.score>=.65){msg('👏 손과 신규 젓가락 교구의 사용 형태가 좋아 보여요!');say('올바른 젓가락 사용법에 가까워요!','pose')}else{msg('손가락 움직임이 좋아요! 젓가락을 잘 보여주세요.');say('손가락 움직임이 좋아요!','hand')}}if(poseCount===0&&phase==='READY')speakOncePose=false;
+const near=!!(feat&&food&&dist(feat.center,food)<Math.max(.11,feat.palm*1.7));
+// Learn a resting-food pixel area only while the toy is not being touched. No depth sensor is used.
+if(phase==='READY'&&food&&inside(food,SOURCE)&&!evidenceOfToolAtFood(product,rods,food)){const a=food.n;if(!baselineArea)baselineArea=a;else baselineArea=baselineArea*.88+a*.12;baselineFrames++;}
+if(sessionActive&&!feat){if(!missingHandSince)missingHandSince=t;}else missingHandSince=0; // Hand loss is advisory only; never gates or resets the mission.
+// A new lift mission is armed only by observed chopstick tips near the toy.
+// No hand geometry, pinch or hand visibility condition is used for scoring.
+const toolNear=evidenceOfToolAtFood(product,rods,food);
+if(sessionActive&&toolNear){toolSeenAt=t;toolLastNear=true;}
+if(sessionActive&&phase==='READY'){
+ if(food&&inside(food,SOURCE)&&toolNear&&baselineFrames>=4){
+   toolNearFrames++;gripCount++;
+   if(gripCount>=(careful?8:5)){
+     setPhase('GRIPPED');anchor={x:food.x,y:food.y};gripValidatedAt=t;liftFrames=0;
+     msg('🥢 젓가락 끝과 음식의 근접이 확인됐어요. 음식을 들어 올려 보세요.');
+     say('좋아요! 음식을 위로 들어 올려 볼까요?','grip');
+   }
+ }else{toolNearFrames=0;gripCount=Math.max(0,gripCount-1);}
+} else if(sessionActive&&(phase==='GRIPPED'||phase==='CARRYING'||phase==='SETTLING')){
+ if(gameMode==='transfer'&&food){
+   const nearTarget=inside(food,TARGET),wasMoved=!!(anchor&&dist(food,anchor)>.17),isSeparated=!toolNear&&(t-toolSeenAt>500);
+   if(wasMoved&&nearTarget)setPhase('CARRYING');
+   if(wasMoved&&nearTarget&&isSeparated){transferFrames++;}else transferFrames=Math.max(0,transferFrames-1);
+   $('heightEstimate').textContent='A → B 이동 판정';
+   if(transferFrames>=(careful?10:7))successMission(t,'A에서 B로 옮기기 성공!');
+ }else if(gameMode==='flip'&&food){
+   const turned=food.color==='blue';if(turned)flipBlueSeen=true;
+   if(flipBlueSeen&&turned)setPhase('CARRYING');
+   if(turned&&inside(food,SOURCE)&&!toolNear&&t-toolSeenAt>500){flipFrames++;}else flipFrames=Math.max(0,flipFrames-1);
+   $('heightEstimate').textContent=turned?'파란 면 감지':'빨간 면 감지';
+   if(flipFrames>=(careful?10:7))successMission(t,'음식 뒤집기 성공!');
+ }else if(food&&baselineArea>8){
+   const mountHeight=Math.min(120,Math.max(25,Number($('cameraHeight').value)||55));
+   const apparentScale=Math.sqrt(food.n/baselineArea);
+   const rawHeight=mountHeight*(1-1/Math.max(.3,apparentScale));
+   liftCm=Math.min(35,Math.max(0,rawHeight));
+   $('heightEstimate').textContent=liftCm.toFixed(1)+'cm 추정 · LiDAR 아님';
+   // Limit planar displacement to reduce false lift triggers; hand position is NOT used.
+   const placeStable=!!(anchor&&dist(food,anchor)<.22);
+   // Keep short recent product evidence when the hand temporarily hides the utensil.
+   const toolEvidence=toolNear||(gripValidatedAt>0&&t-gripValidatedAt<10000); // Once grip is evidenced, temporary tool/hand occlusion does not cancel the lift.
+   if(toolNear)toolSeenAt=t;
+   if(toolEvidence&&placeStable&&liftCm>=5){liftFrames++}else liftFrames=Math.max(0,liftFrames-1);
+   if(phase==='GRIPPED'&&liftCm>=2&&toolEvidence)setPhase('CARRYING');
+   if(liftFrames>=(careful?10:7)){
+successMission(t,'들어 올리기 성공!');
+   }
+ }else {$('heightEstimate').textContent='음식 가림 · 이전 단계 유지';}
+}
+if(sessionActive&&phase!=='SUCCESS'&&phase!=='RETURNING')$('confidence').textContent=baselineFrames<4?'음식 기준 크기 측정 중':phase==='READY'?(toolNear?'교구 끝 확인 중 · 손 관절 무관':'교구 끝과 음식 근접 대기 · 손 관절 무관'):'교구와 음식 영상 근거 · 높이 추정 (손 무관)';
+// SUCCESS immediately selects the next target; RETURNING is no longer used.
+prev={food:food?{x:food.x,y:food.y}:null,hand:feat?{...feat.center}:null};render(feat)}
+function loop(t){if(!running)return;if(video.readyState>=2&&t-lastFrame>=120){lastFrame=t;try{update(t)}catch(e){if(e.message!==lastError){lastError=e.message;log('분석 오류: '+e.message);$('status').textContent='분석 오류: '+e.message}}}requestAnimationFrame(loop)}
+sessionSeconds=Number($('sessionDuration').value)||60;chooseTarget(false);updateSessionUI();log('v0.7.2 스크립트 연결 · HTTPS '+isSecureContext);
+</script></body></html>
