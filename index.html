@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#72c6ff">
-<title>🐰 콕콕 젓가락 대모험 v1.8</title>
+<title>🐰 콕콕 젓가락 대모험 v1.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -631,7 +631,7 @@ li.ok {
 <body>
 <div class="app">
   <header>
-    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.8</span></h1>
+    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.9</span></h1>
     <div class="header-chips">
       <span class="chip">⭐ <span id="score">0</span>점</span>
       <span class="chip timer" id="tchip">⏱ <span id="time">01:00</span></span>
@@ -741,7 +741,7 @@ li.ok {
         </select>
       </label>
       <div class="mini">
-        • 나무·검정·흰색 등 모든 색상의 젓가락 끝 두 짝(위·아래)과 엄지·검지 오므림 동작을 함께 분석해 실제 집기 동작을 정밀 판별합니다.<br>
+        • 교정용·일반 젓가락 모두 엄지·검지·중지 손가락 끝 경계선에서 시작해 가늘어지는 두 갈래 쐐기(테이퍼) 윤곽을 추적해 젓가락 끝 형태와 실제 오므라듦을 정밀 인식합니다.<br>
         • 미션 출제 시 화면 배너와 자연스러운 한국 여성 음성으로 동시에 안내합니다.<br>
         • 색깔별 성공 시 <b>“파란색 음식 성공!”</b>, <b>“빨간색 음식 성공!”</b> 칭찬 후 4초 뒤에 다음 미션이 이어집니다.<br>
         • 영상은 기기 내부에서만 분석되며 외부로 전송·저장되지 않아요.
@@ -854,7 +854,7 @@ let bursts = [];
 let lastTip = null;
 let openSpanHistory = []; // 최근 프레임의 젓가락 끝 간격(또는 엄지-검지 개폐 폭) 기록
 let smoothTips = null;    // { tipA, tipB, mid, spread, openRatio, isClosing, isClosed }
-let renderState = { food: null, tip: null, tipA: null, tipB: null, near: false, isClosed: false, openRatio: 1 };
+let renderState = { food: null, tip: null, tipA: null, tipB: null, rootA: null, rootB: null, near: false, isClosed: false, openRatio: 1 };
 let lastPoseMask = -1;
 let lastStText = '';
 let lastGbarW = '';
@@ -1080,8 +1080,12 @@ function cls(r, g, b) {
   if (h >= 261 && h <= 338 && b > 80) return 'purple';
 }
 
-// 색상 무관(나무·검정·흰색·금속) 젓가락 두 짝의 윤곽선(에지) + 손가락 개폐 운동을 결합해
-// 젓가락 두 끝(tipA, tipB)의 위치와 실제 '오므라드는 동작'을 정밀 검출
+// [손가락 끝 경계 기점(Finger-Tip Boundary Root) 기반 젓가락 형태 및 끝단 정밀 검출기]
+// 실제 착용 형태 분석 반영:
+// 1) 젓가락 몸통은 엄지 끝(4)·검지 끝(8)·중지 끝(12)이 이루는 손가락 앞 경계선 직후에서 두 갈래로 돌출 시작
+// 2) 각 갈래는 손가락 경계 기점(rootA, rootB)에서 굵게 시작해 끝으로 갈수록 일정하게 좁아지는(tapered) 직선 쐐기 형태
+// 3) 손가락 경계 바로 바깥쪽(root)에서 두 젓가락 뿌리를 먼저 고정한 뒤, 전방 슬라이스별 연속 추적(ray-slice tracking)으로
+//    중간 끊김이나 배경 노이즈 없이 실제 끝점(tipA, tipB)과 두 끝의 오므라듦(수렴 각도 및 간격)을 정밀 검출
 function detectChopstickTipsAndPinch(d) {
   if (!hand) {
     openSpanHistory.length = 0;
@@ -1089,31 +1093,47 @@ function detectChopstickTipsAndPinch(d) {
     return null;
   }
 
-  // 1. 손바닥 스케일 및 손가락 젓가락 쥐는 기준축 계산
   const palmLen = Math.max(0.035, dist(hand[0], hand[9]));
-  // 엄지 끝(4)과 검지 끝(8) 거리: 젓가락을 오므릴 때 함께 좁아지는 핵심 생체 신호
   const fingerSpanNorm = dist(hand[4], hand[8]) / palmLen;
 
-  // 젓가락 쥐는 중심점(엄지 끝4, 검지 끝8, 중지 끝12 가중 평균)과 손목(0)으로부터의 전진 방향 벡터
-  const gripX = (hand[8].x * 0.48 + hand[4].x * 0.30 + hand[12].x * 0.22);
-  const gripY = (hand[8].y * 0.48 + hand[4].y * 0.30 + hand[12].y * 0.22);
+  // 1. 손가락 파지부(엄지4, 검지8, 중지12, 약지16 끝점)에서 젓가락이 시작되는 기준점과 돌출 주축 계산
+  const thumbTip = hand[4];
+  const indexTip = hand[8];
+  const midTip = hand[12];
+  const ringTip = hand[16];
 
-  // 손바닥 중심(9) -> 검지 끝(8) 방향과 엄지(4)-검지(8) 각도를 결합해 젓가락이 뻗어 나가는 주축 추정
-  let dirX = (hand[8].x - hand[5].x) * 0.65 + (gripX - hand[0].x) * 0.35;
-  let dirY = (hand[8].y - hand[5].y) * 0.65 + (gripY - hand[0].y) * 0.35;
-  const dirLen = Math.hypot(dirX, dirY) || 1;
-  dirX /= dirLen;
-  dirY /= dirLen;
-  // 주축에 수직인 벡터 (위쪽 젓가락 vs 아래쪽 젓가락 벌어짐을 분리하는 축)
+  // 파지 중심점(손가락 끝 경계선 중심)
+  const gripX = thumbTip.x * 0.34 + indexTip.x * 0.36 + midTip.x * 0.20 + ringTip.x * 0.10;
+  const gripY = thumbTip.y * 0.34 + indexTip.y * 0.36 + midTip.y * 0.20 + ringTip.y * 0.10;
+
+  // 손목(0)/손바닥(5,9)에서 파지 손가락 끝(4,8,12)을 향해 젓가락 끝이 뻗어 나가는 돌출 주축 벡터(dir)
+  // (손등 헤드부 방향인 -dir 쪽은 탐색에서 완전히 배제하여 오인식 차단)
+  const rawDirX = (indexTip.x - hand[5].x) * 0.45 + (thumbTip.x - hand[2].x) * 0.35 + (gripX - hand[0].x) * 0.20;
+  const rawDirY = (indexTip.y - hand[5].y) * 0.45 + (thumbTip.y - hand[2].y) * 0.35 + (gripY - hand[0].y) * 0.20;
+  const dirLen = Math.hypot(rawDirX, rawDirY) || 1;
+  const dirX = rawDirX / dirLen;
+  const dirY = rawDirY / dirLen;
+  // 주축에 수직인 횡방향 벡터 (위쪽 움직이는 대 vs 아래쪽 고정 대 분리)
   const perpX = -dirY;
   const perpY = dirX;
 
-  // 2. 그레이스케일 휘도 맵 생성 및 손 영역 앞쪽 탐색 ROI 내 경계선(Gradient) 추출
-  const reachMax = Math.min(0.46, palmLen * 2.15);
-  const roiMinX = Math.max(2, Math.floor((gripX - reachMax) * FW));
-  const roiMaxX = Math.min(FW - 3, Math.ceil((gripX + reachMax) * FW));
-  const roiMinY = Math.max(2, Math.floor((gripY - reachMax) * FH));
-  const roiMaxY = Math.min(FH - 3, Math.ceil((gripY + reachMax) * FH));
+  // 손가락 끝 경계선(finger exit line): 파지 손가락(4,8,12,16) 중 주축 방향으로 가장 앞선 지점
+  const fingerTips = [thumbTip, indexTip, midTip, ringTip];
+  let exitAlongMax = -1e9;
+  for (const ft of fingerTips) {
+    const proj = (ft.x - gripX) * dirX + (ft.y - gripY) * dirY;
+    if (proj > exitAlongMax) exitAlongMax = proj;
+  }
+  // 손가락 끝 경계선 바로 앞(exitAlongMax + 약간의 피부 경계 여유)을 젓가락 검출 시작 기점(rootStart)으로 설정
+  const rootStartNorm = Math.max(0.01, exitAlongMax + palmLen * 0.06);
+  const maxShaftLenNorm = Math.min(0.52, palmLen * 2.35);
+
+  // 2. 탐색 ROI 내 휘도(Luminance) 및 색상 대비 맵 구축
+  const spanR = rootStartNorm + maxShaftLenNorm + 0.05;
+  const roiMinX = Math.max(2, Math.floor((gripX - spanR) * FW));
+  const roiMaxX = Math.min(FW - 3, Math.ceil((gripX + spanR) * FW));
+  const roiMinY = Math.max(2, Math.floor((gripY - spanR) * FH));
+  const roiMaxY = Math.min(FH - 3, Math.ceil((gripY + spanR) * FH));
 
   for (let y = roiMinY - 1; y <= roiMaxY + 1; y++) {
     const row = y * FW;
@@ -1124,116 +1144,180 @@ function detectChopstickTipsAndPinch(d) {
     }
   }
 
-  // ROI 내부의 모든 에지 픽셀(나무/검정/흰색/스테인리스 등 배경과 대비되는 가늘고 긴 막대 윤곽) 수집
-  // 법선 방향(perp) 투영값(signed lateral offset)을 기준으로 위쪽(+perp) 젓가락과 아래쪽(-perp) 젓가락으로 분리
-  const upperCandidates = [];
-  const lowerCandidates = [];
+  // 3. 손가락 끝 경계(rootStart)로부터 전방으로 슬라이스(단계)별 횡단 프로파일 스캔
+  //    - 각 슬라이스(along 거리)에서 젓가락 축에 수직(lateral)으로 횡단하며 에지 및 젓가락 몸통 중심선을 검출
+  //    - 바깥쪽으로 갈수록 폭(width)이 좁아지는 테이퍼(taper) 특성을 반영해 끊김 없이 끝단까지 추적
   const gripPx = gripX * FW, gripPy = gripY * FH;
-  const maxReachPx = reachMax * FW;
-  const minReachPx = palmLen * FW * 0.18;
+  const startPx = rootStartNorm * FW;
+  const endPx = (rootStartNorm + maxShaftLenNorm) * FW;
+  const maxLatPx = palmLen * FW * 0.72;
+  const numSlices = 18;
+  const stepPx = Math.max(1.5, (endPx - startPx) / numSlices);
 
-  for (let y = roiMinY; y <= roiMaxY; y++) {
-    const row = y * FW;
-    for (let x = roiMinX; x <= roiMaxX; x++) {
-      const idx = row + x;
-      if (mask[idx]) continue; // 손가락 피부 영역 제외
+  // 각 슬라이스에서 후보점(횡단 위치 lateral, 강도 score) 수집
+  const upperSlices = [];
+  const lowerSlices = [];
 
-      // Sobel 유사 1차 미분 경계 강도 (밝은 젓가락이든 어두운 젓가락이든 모두 검출)
-      const gx = Math.abs(lumBuf[idx + 1] - lumBuf[idx - 1]);
-      const gy = Math.abs(lumBuf[idx + FW] - lumBuf[idx - FW]);
-      const grad = gx + gy;
-      if (grad < 42) continue;
+  for (let s = 0; s <= numSlices; s++) {
+    const along = startPx + s * stepPx;
+    const baseX = gripPx + dirX * along;
+    const baseY = gripPy + dirY * along;
 
-      const dx = x - gripPx;
-      const dy = y - gripPy;
-      const along = dx * dirX + dy * dirY;   // 젓가락 길이 방향 전진 거리
-      const lateral = dx * perpX + dy * perpY; // 두 젓가락 사이 벌어짐(수직) 거리
+    let bestUp = null;
+    let bestLow = null;
 
-      if (along < minReachPx || along > maxReachPx) continue;
-      if (Math.abs(lateral) > maxReachPx * 0.55) continue;
+    // 횡단 스캔 (-maxLatPx ~ +maxLatPx)
+    for (let lat = -maxLatPx; lat <= maxLatPx; lat += 1.0) {
+      const px = Math.round(baseX + perpX * lat);
+      const py = Math.round(baseY + perpY * lat);
+      if (px < 2 || px >= FW - 2 || py < 2 || py >= FH - 2) continue;
+      const idx = py * FW + px;
+      if (mask[idx]) continue; // 손가락 피부 마스크 내부는 제외 (손가락 끝 경계 바깥만 허용)
 
-      const item = { x: x / FW, y: y / FH, along, lateral, grad };
-      if (lateral >= 0) upperCandidates.push(item);
-      else lowerCandidates.push(item);
+      // 젓가락 길이 방향에 수직인 횡방향 경계 강도(엣지) 계산 -> 가늘고 긴 젓가락 윤곽에 특화
+      const pPlusX = Math.round(px + perpX), pPlusY = Math.round(py + perpY);
+      const pMinusX = Math.round(px - perpX), pMinusY = Math.round(py - perpY);
+      const idxP = Math.min(FW * FH - 1, Math.max(0, pPlusY * FW + pPlusX));
+      const idxM = Math.min(FW * FH - 1, Math.max(0, pMinusY * FW + pMinusX));
+
+      const crossGrad = Math.abs(lumBuf[idxP] - lumBuf[idxM]);
+      const localGrad = Math.abs(lumBuf[idx + 1] - lumBuf[idx - 1]) + Math.abs(lumBuf[idx + FW] - lumBuf[idx - FW]);
+      const edgeScore = crossGrad * 1.4 + localGrad * 0.5;
+      if (edgeScore < 38) continue;
+
+      // 손가락 끝 경계에 가까울수록(root) 폭이 넓고, 끝(tip)으로 갈수록 중앙(lat=0) 쪽으로 모이는 쐐기 형태 가중치
+      const progress = s / numSlices;
+      const maxAllowedLat = maxLatPx * (1.0 - progress * 0.35);
+      if (Math.abs(lat) > maxAllowedLat) continue;
+
+      const cand = { x: px / FW, y: py / FH, along, lat, score: edgeScore, slice: s };
+      if (lat >= 0) {
+        if (!bestUp || cand.score > bestUp.score) bestUp = cand;
+      } else {
+        if (!bestLow || cand.score > bestLow.score) bestLow = cand;
+      }
     }
+
+    if (bestUp) upperSlices.push(bestUp);
+    if (bestLow) lowerSlices.push(bestLow);
   }
 
-  // 각 그룹에서 젓가락 길이 방향(along)으로 가장 멀리 뻗은 상위 끝점들을 추출해 끝단 좌표 계산
-  const extractEndTip = (list, fallbackLateralSign) => {
-    if (list.length < 4) {
-      // 가려짐 등으로 에지가 부족할 때는 손가락 기하학 기반 보조 끝점 추정
-      const reach = palmLen * 1.15;
-      const spreadOffset = fallbackLateralSign * Math.max(0.006, (fingerSpanNorm * 0.22) * palmLen);
+  // 4. 손가락 끝 경계(root)에서 시작해 연속적으로 이어지는 젓가락 갈래(shaft)만 필터링해 끝단(tip) 산출
+  const traceContinuousShaft = (slices, fallbackSign) => {
+    if (slices.length < 2) {
+      const reach = rootStartNorm + palmLen * 1.15;
+      const spreadOffset = fallbackSign * Math.max(0.005, (fingerSpanNorm * 0.20) * palmLen);
       return {
-        x: Math.min(0.98, Math.max(0.02, gripX + dirX * reach + perpX * spreadOffset)),
-        y: Math.min(0.98, Math.max(0.02, gripY + dirY * reach + perpY * spreadOffset)),
-        detected: false
+        root: { x: gripX + dirX * rootStartNorm + perpX * spreadOffset * 1.4, y: gripY + dirY * rootStartNorm + perpY * spreadOffset * 1.4 },
+        tip: {
+          x: Math.min(0.98, Math.max(0.02, gripX + dirX * reach + perpX * spreadOffset)),
+          y: Math.min(0.98, Math.max(0.02, gripY + dirY * reach + perpY * spreadOffset))
+        },
+        detected: false,
+        lengthNorm: palmLen * 1.15
       };
     }
-    list.sort((a, b) => b.along - a.along);
-    const topK = list.slice(0, Math.min(6, list.length));
-    let sx = 0, sy = 0, sw = 0;
-    for (const p of topK) {
-      const w = p.grad;
-      sx += p.x * w;
-      sy += p.y * w;
-      sw += w;
+
+    // 손가락 끝 경계 부근(앞쪽 40% 슬라이스 이내)에서 시작된 뿌리점(root) 확보
+    const rootCandidate = slices.find(p => p.slice <= Math.ceil(numSlices * 0.45)) || slices[0];
+    const chain = [rootCandidate];
+    let prev = rootCandidate;
+
+    // 뿌리점부터 횡방향(lat) 급격한 점프 없이 연속적으로 이어지는 점들만 젓가락 몸통으로 인정
+    const maxLatJump = Math.max(4.5, palmLen * FW * 0.14);
+    for (let i = 1; i < slices.length; i++) {
+      const cur = slices[i];
+      if (cur.slice <= prev.slice) continue;
+      if (cur.slice - prev.slice > 4) break; // 중간에 너무 길게 끊기면 젓가락 끝이 끝난 것으로 판단
+      if (Math.abs(cur.lat - prev.lat) <= maxLatJump) {
+        chain.push(cur);
+        prev = cur;
+      }
     }
-    return { x: sx / sw, y: sy / sw, detected: true };
+
+    const rootPt = chain[0];
+    const endPt = chain[chain.length - 1];
+    // 마지막 2~3개 끝단 슬라이스의 가중 평균으로 뾰족한 젓가락 끝점 정밀화
+    const tail = chain.slice(Math.max(0, chain.length - 2));
+    let tx = 0, ty = 0, tw = 0;
+    for (const p of tail) {
+      tx += p.x * p.score;
+      ty += p.y * p.score;
+      tw += p.score;
+    }
+    const finalTip = { x: tx / tw, y: ty / tw };
+    const shaftLen = dist(rootPt, finalTip);
+
+    return {
+      root: { x: rootPt.x, y: rootPt.y },
+      tip: finalTip,
+      detected: chain.length >= 3 && shaftLen >= palmLen * 0.35,
+      lengthNorm: shaftLen
+    };
   };
 
-  const rawA = extractEndTip(upperCandidates, 1);
-  const rawB = extractEndTip(lowerCandidates, -1);
+  const shaftA = traceContinuousShaft(upperSlices, 1);
+  const shaftB = traceContinuousShaft(lowerSlices, -1);
 
-  // 이전 프레임과 부드럽게 보간(jitter 제거)
+  // 5. 프레임 간 떨림 보정(EMA 스무딩)
   if (!smoothTips) {
     smoothTips = {
-      tipA: { x: rawA.x, y: rawA.y },
-      tipB: { x: rawB.x, y: rawB.y }
+      tipA: { x: shaftA.tip.x, y: shaftA.tip.y },
+      tipB: { x: shaftB.tip.x, y: shaftB.tip.y },
+      rootA: { x: shaftA.root.x, y: shaftA.root.y },
+      rootB: { x: shaftB.root.x, y: shaftB.root.y }
     };
   } else {
-    smoothTips.tipA.x = smoothTips.tipA.x * 0.45 + rawA.x * 0.55;
-    smoothTips.tipA.y = smoothTips.tipA.y * 0.45 + rawA.y * 0.55;
-    smoothTips.tipB.x = smoothTips.tipB.x * 0.45 + rawB.x * 0.55;
-    smoothTips.tipB.y = smoothTips.tipB.y * 0.45 + rawB.y * 0.55;
+    smoothTips.tipA.x = smoothTips.tipA.x * 0.42 + shaftA.tip.x * 0.58;
+    smoothTips.tipA.y = smoothTips.tipA.y * 0.42 + shaftA.tip.y * 0.58;
+    smoothTips.tipB.x = smoothTips.tipB.x * 0.42 + shaftB.tip.x * 0.58;
+    smoothTips.tipB.y = smoothTips.tipB.y * 0.42 + shaftB.tip.y * 0.58;
+    smoothTips.rootA.x = smoothTips.rootA.x * 0.5 + shaftA.root.x * 0.5;
+    smoothTips.rootA.y = smoothTips.rootA.y * 0.5 + shaftA.root.y * 0.5;
+    smoothTips.rootB.x = smoothTips.rootB.x * 0.5 + shaftB.root.x * 0.5;
+    smoothTips.rootB.y = smoothTips.rootB.y * 0.5 + shaftB.root.y * 0.5;
   }
 
   const tipA = smoothTips.tipA;
   const tipB = smoothTips.tipB;
+  const rootA = smoothTips.rootA;
+  const rootB = smoothTips.rootB;
   const mid = { x: (tipA.x + tipB.x) * 0.5, y: (tipA.y + tipB.y) * 0.5 };
 
-  // 3. 실제 '오므라드는 동작' 정밀 판별
-  // (A) 두 젓가락 끝(tipA, tipB) 사이의 정규화 간격 + (B) 엄지(4)-검지(8) 손가락 오므림 폭 결합
+  // 6. 테이퍼 비율(뿌리 간격 대비 끝단 간격 수렴도) + 끝점 거리 + 손가락 개폐 결합으로 '오므림' 정밀 판별
   const tipGapNorm = dist(tipA, tipB) / palmLen;
-  const bothEdgesFound = rawA.detected && rawB.detected;
+  const rootGapNorm = Math.max(0.08, dist(rootA, rootB) / palmLen);
+  // 뿌리 간격(rootGap)보다 끝단 간격(tipGap)이 얼마나 좁아졌는지(수렴 비율: 0에 가까울수록 끝이 맞닿아 오므라듦)
+  const convergenceRatio = tipGapNorm / rootGapNorm;
+
+  const bothEdgesFound = shaftA.detected && shaftB.detected;
   const combinedGap = bothEdgesFound
-    ? (tipGapNorm * 0.65 + fingerSpanNorm * 0.35)
-    : (fingerSpanNorm * 0.8 + tipGapNorm * 0.2);
+    ? (tipGapNorm * 0.55 + Math.min(1.2, convergenceRatio * 0.55) * 0.25 + fingerSpanNorm * 0.20)
+    : (fingerSpanNorm * 0.78 + tipGapNorm * 0.22);
 
   openSpanHistory.push(combinedGap);
   if (openSpanHistory.length > 8) openSpanHistory.shift();
 
-  // 최근 8프레임 중 최대로 벌어졌던 폭(maxRecentGap) 대비 현재 얼마나 오므라들었는지 계산
   let maxRecentGap = combinedGap;
   for (let i = 0; i < openSpanHistory.length; i++) {
     if (openSpanHistory[i] > maxRecentGap) maxRecentGap = openSpanHistory[i];
   }
 
-  // 닫힘 정도(0.0 = 활짝 벌어짐, 1.0 = 완전히 오므라듦)
-  const closedThreshold = 0.42;
-  const openThreshold = 0.85;
+  const closedThreshold = 0.36;
+  const openThreshold = 0.80;
   const openness = Math.max(0, Math.min(1, (combinedGap - closedThreshold) / (openThreshold - closedThreshold)));
 
-  // 실제로 벌렸다가 오므라드는 수축 변화량(delta) 또는 두 끝이 충분히 맞닿은 상태 판별
   const contraction = maxRecentGap - combinedGap;
-  const isClosingMotion = (contraction >= 0.055 && combinedGap <= 0.62);
-  const isPinchedClosed = (combinedGap <= 0.46) || isClosingMotion;
+  const isClosingMotion = (contraction >= 0.05 && combinedGap <= 0.58);
+  const isPinchedClosed = (combinedGap <= 0.42) || (bothEdgesFound && convergenceRatio <= 0.52 && tipGapNorm <= 0.35) || isClosingMotion;
 
   return {
     x: mid.x,
     y: mid.y,
     tipA: { x: tipA.x, y: tipA.y },
     tipB: { x: tipB.x, y: tipB.y },
+    rootA: { x: rootA.x, y: rootA.y },
+    rootB: { x: rootB.x, y: rootB.y },
     gapNorm: combinedGap,
     openness,
     contraction,
@@ -1246,8 +1330,11 @@ function detectChopstickTipsAndPinch(d) {
 function scan(d) {
   mask.fill(0);
   if (hand) {
-    const R = Math.max(5, Math.max(0.03, dist(hand[0], hand[9])) * FW * 0.42);
+    // 손가락 끝 경계(4,8,12,16) 바로 바깥에서 시작하는 젓가락 뿌리가 지워지지 않도록 손가락 끝 반경은 컴팩트하게 마스킹
+    const palmPx = Math.max(0.03, dist(hand[0], hand[9])) * FW;
     for (let idx = 0; idx < hand.length; idx++) {
+      const isFingerTip = (idx === 4 || idx === 8 || idx === 12 || idx === 16 || idx === 20);
+      const R = Math.max(4, palmPx * (isFingerTip ? 0.28 : 0.42));
       const p = hand[idx];
       const px = p.x * FW, py = p.y * FH;
       const y0 = Math.max(0, (py - R) | 0), y1 = Math.min(FH, py + R);
@@ -1668,6 +1755,8 @@ function update(t) {
     tip,
     tipA: tip?.tipA || null,
     tipB: tip?.tipB || null,
+    rootA: tip?.rootA || null,
+    rootB: tip?.rootB || null,
     near,
     isClosed: pinched,
     openRatio: tip ? tip.openness : 1
@@ -1695,12 +1784,24 @@ function renderCanvas() {
     cx.restore();
   }
 
-  const { tipA, tipB, isClosed } = renderState;
+  const { tipA, tipB, rootA, rootB, isClosed } = renderState;
   if (tipA && tipB) {
     const ax = tipA.x * W, ay = tipA.y * H;
     const bx = tipB.x * W, by = tipB.y * H;
     const mx = (ax + bx) * 0.5, my = (ay + by) * 0.5;
     cx.save();
+
+    // 손가락 끝 경계(rootA, rootB)에서 시작해 끝점(tipA, tipB)까지 이어지는 젓가락 몸통 가이드 선
+    if (rootA && rootB) {
+      cx.strokeStyle = isClosed ? 'rgba(56, 217, 169, 0.85)' : 'rgba(255, 255, 255, 0.8)';
+      cx.lineWidth = 3;
+      cx.beginPath();
+      cx.moveTo(rootA.x * W, rootA.y * H);
+      cx.lineTo(ax, ay);
+      cx.moveTo(rootB.x * W, rootB.y * H);
+      cx.lineTo(bx, by);
+      cx.stroke();
+    }
 
     // 두 젓가락 끝 사이의 벌어짐(집게 간격) 연결선
     cx.strokeStyle = isClosed ? '#38d9a9' : '#ffd43b';
