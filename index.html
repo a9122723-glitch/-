@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#72c6ff">
-<title>🐰 콕콕 젓가락 대모험 v1.7</title>
+<title>🐰 콕콕 젓가락 대모험 v1.8</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -631,7 +631,7 @@ li.ok {
 <body>
 <div class="app">
   <header>
-    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.7</span></h1>
+    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.8</span></h1>
     <div class="header-chips">
       <span class="chip">⭐ <span id="score">0</span>점</span>
       <span class="chip timer" id="tchip">⏱ <span id="time">01:00</span></span>
@@ -741,6 +741,7 @@ li.ok {
         </select>
       </label>
       <div class="mini">
+        • 나무·검정·흰색 등 모든 색상의 젓가락 끝 두 짝(위·아래)과 엄지·검지 오므림 동작을 함께 분석해 실제 집기 동작을 정밀 판별합니다.<br>
         • 미션 출제 시 화면 배너와 자연스러운 한국 여성 음성으로 동시에 안내합니다.<br>
         • 색깔별 성공 시 <b>“파란색 음식 성공!”</b>, <b>“빨간색 음식 성공!”</b> 칭찬 후 4초 뒤에 다음 미션이 이어집니다.<br>
         • 영상은 기기 내부에서만 분석되며 외부로 전송·저장되지 않아요.
@@ -838,7 +839,7 @@ const COL = {
 const KEYS = Object.keys(COL);
 
 let FW = 240, FH = 135, W = 640, H = 360;
-let mask, wl;
+let mask, edgeBuf, lumBuf;
 let stream = null, det = null, aiBusy = false, running = false, pausedByHidden = false;
 let voiceOn = true, voiceOK = false, mirrorOn = false;
 let session = false, endAt = 0, dur = 60, score = 0, wins = 0;
@@ -851,7 +852,9 @@ let vis = {};
 let lastVisSig = '';
 let bursts = [];
 let lastTip = null;
-let renderState = { food: null, tip: null, near: false };
+let openSpanHistory = []; // 최근 프레임의 젓가락 끝 간격(또는 엄지-검지 개폐 폭) 기록
+let smoothTips = null;    // { tipA, tipB, mid, spread, openRatio, isClosing, isClosed }
+let renderState = { food: null, tip: null, tipA: null, tipB: null, near: false, isClosed: false, openRatio: 1 };
 let lastPoseMask = -1;
 let lastStText = '';
 let lastGbarW = '';
@@ -1033,7 +1036,8 @@ function setup() {
   wk.width = FW;
   wk.height = FH;
   mask = new Uint8Array(FW * FH);
-  wl = new Int32Array(FW * FH);
+  edgeBuf = new Uint8Array(FW * FH);
+  lumBuf = new Uint8Array(FW * FH);
   sizeStage();
   log('최적화 해상도: ' + W + '×' + H + ' (분석 ' + FW + '×' + FH + ')');
 }
@@ -1076,6 +1080,169 @@ function cls(r, g, b) {
   if (h >= 261 && h <= 338 && b > 80) return 'purple';
 }
 
+// 색상 무관(나무·검정·흰색·금속) 젓가락 두 짝의 윤곽선(에지) + 손가락 개폐 운동을 결합해
+// 젓가락 두 끝(tipA, tipB)의 위치와 실제 '오므라드는 동작'을 정밀 검출
+function detectChopstickTipsAndPinch(d) {
+  if (!hand) {
+    openSpanHistory.length = 0;
+    smoothTips = null;
+    return null;
+  }
+
+  // 1. 손바닥 스케일 및 손가락 젓가락 쥐는 기준축 계산
+  const palmLen = Math.max(0.035, dist(hand[0], hand[9]));
+  // 엄지 끝(4)과 검지 끝(8) 거리: 젓가락을 오므릴 때 함께 좁아지는 핵심 생체 신호
+  const fingerSpanNorm = dist(hand[4], hand[8]) / palmLen;
+
+  // 젓가락 쥐는 중심점(엄지 끝4, 검지 끝8, 중지 끝12 가중 평균)과 손목(0)으로부터의 전진 방향 벡터
+  const gripX = (hand[8].x * 0.48 + hand[4].x * 0.30 + hand[12].x * 0.22);
+  const gripY = (hand[8].y * 0.48 + hand[4].y * 0.30 + hand[12].y * 0.22);
+
+  // 손바닥 중심(9) -> 검지 끝(8) 방향과 엄지(4)-검지(8) 각도를 결합해 젓가락이 뻗어 나가는 주축 추정
+  let dirX = (hand[8].x - hand[5].x) * 0.65 + (gripX - hand[0].x) * 0.35;
+  let dirY = (hand[8].y - hand[5].y) * 0.65 + (gripY - hand[0].y) * 0.35;
+  const dirLen = Math.hypot(dirX, dirY) || 1;
+  dirX /= dirLen;
+  dirY /= dirLen;
+  // 주축에 수직인 벡터 (위쪽 젓가락 vs 아래쪽 젓가락 벌어짐을 분리하는 축)
+  const perpX = -dirY;
+  const perpY = dirX;
+
+  // 2. 그레이스케일 휘도 맵 생성 및 손 영역 앞쪽 탐색 ROI 내 경계선(Gradient) 추출
+  const reachMax = Math.min(0.46, palmLen * 2.15);
+  const roiMinX = Math.max(2, Math.floor((gripX - reachMax) * FW));
+  const roiMaxX = Math.min(FW - 3, Math.ceil((gripX + reachMax) * FW));
+  const roiMinY = Math.max(2, Math.floor((gripY - reachMax) * FH));
+  const roiMaxY = Math.min(FH - 3, Math.ceil((gripY + reachMax) * FH));
+
+  for (let y = roiMinY - 1; y <= roiMaxY + 1; y++) {
+    const row = y * FW;
+    for (let x = roiMinX - 1; x <= roiMaxX + 1; x++) {
+      const idx = row + x;
+      const j = idx << 2;
+      lumBuf[idx] = (d[j] * 77 + d[j + 1] * 150 + d[j + 2] * 29) >> 8;
+    }
+  }
+
+  // ROI 내부의 모든 에지 픽셀(나무/검정/흰색/스테인리스 등 배경과 대비되는 가늘고 긴 막대 윤곽) 수집
+  // 법선 방향(perp) 투영값(signed lateral offset)을 기준으로 위쪽(+perp) 젓가락과 아래쪽(-perp) 젓가락으로 분리
+  const upperCandidates = [];
+  const lowerCandidates = [];
+  const gripPx = gripX * FW, gripPy = gripY * FH;
+  const maxReachPx = reachMax * FW;
+  const minReachPx = palmLen * FW * 0.18;
+
+  for (let y = roiMinY; y <= roiMaxY; y++) {
+    const row = y * FW;
+    for (let x = roiMinX; x <= roiMaxX; x++) {
+      const idx = row + x;
+      if (mask[idx]) continue; // 손가락 피부 영역 제외
+
+      // Sobel 유사 1차 미분 경계 강도 (밝은 젓가락이든 어두운 젓가락이든 모두 검출)
+      const gx = Math.abs(lumBuf[idx + 1] - lumBuf[idx - 1]);
+      const gy = Math.abs(lumBuf[idx + FW] - lumBuf[idx - FW]);
+      const grad = gx + gy;
+      if (grad < 42) continue;
+
+      const dx = x - gripPx;
+      const dy = y - gripPy;
+      const along = dx * dirX + dy * dirY;   // 젓가락 길이 방향 전진 거리
+      const lateral = dx * perpX + dy * perpY; // 두 젓가락 사이 벌어짐(수직) 거리
+
+      if (along < minReachPx || along > maxReachPx) continue;
+      if (Math.abs(lateral) > maxReachPx * 0.55) continue;
+
+      const item = { x: x / FW, y: y / FH, along, lateral, grad };
+      if (lateral >= 0) upperCandidates.push(item);
+      else lowerCandidates.push(item);
+    }
+  }
+
+  // 각 그룹에서 젓가락 길이 방향(along)으로 가장 멀리 뻗은 상위 끝점들을 추출해 끝단 좌표 계산
+  const extractEndTip = (list, fallbackLateralSign) => {
+    if (list.length < 4) {
+      // 가려짐 등으로 에지가 부족할 때는 손가락 기하학 기반 보조 끝점 추정
+      const reach = palmLen * 1.15;
+      const spreadOffset = fallbackLateralSign * Math.max(0.006, (fingerSpanNorm * 0.22) * palmLen);
+      return {
+        x: Math.min(0.98, Math.max(0.02, gripX + dirX * reach + perpX * spreadOffset)),
+        y: Math.min(0.98, Math.max(0.02, gripY + dirY * reach + perpY * spreadOffset)),
+        detected: false
+      };
+    }
+    list.sort((a, b) => b.along - a.along);
+    const topK = list.slice(0, Math.min(6, list.length));
+    let sx = 0, sy = 0, sw = 0;
+    for (const p of topK) {
+      const w = p.grad;
+      sx += p.x * w;
+      sy += p.y * w;
+      sw += w;
+    }
+    return { x: sx / sw, y: sy / sw, detected: true };
+  };
+
+  const rawA = extractEndTip(upperCandidates, 1);
+  const rawB = extractEndTip(lowerCandidates, -1);
+
+  // 이전 프레임과 부드럽게 보간(jitter 제거)
+  if (!smoothTips) {
+    smoothTips = {
+      tipA: { x: rawA.x, y: rawA.y },
+      tipB: { x: rawB.x, y: rawB.y }
+    };
+  } else {
+    smoothTips.tipA.x = smoothTips.tipA.x * 0.45 + rawA.x * 0.55;
+    smoothTips.tipA.y = smoothTips.tipA.y * 0.45 + rawA.y * 0.55;
+    smoothTips.tipB.x = smoothTips.tipB.x * 0.45 + rawB.x * 0.55;
+    smoothTips.tipB.y = smoothTips.tipB.y * 0.45 + rawB.y * 0.55;
+  }
+
+  const tipA = smoothTips.tipA;
+  const tipB = smoothTips.tipB;
+  const mid = { x: (tipA.x + tipB.x) * 0.5, y: (tipA.y + tipB.y) * 0.5 };
+
+  // 3. 실제 '오므라드는 동작' 정밀 판별
+  // (A) 두 젓가락 끝(tipA, tipB) 사이의 정규화 간격 + (B) 엄지(4)-검지(8) 손가락 오므림 폭 결합
+  const tipGapNorm = dist(tipA, tipB) / palmLen;
+  const bothEdgesFound = rawA.detected && rawB.detected;
+  const combinedGap = bothEdgesFound
+    ? (tipGapNorm * 0.65 + fingerSpanNorm * 0.35)
+    : (fingerSpanNorm * 0.8 + tipGapNorm * 0.2);
+
+  openSpanHistory.push(combinedGap);
+  if (openSpanHistory.length > 8) openSpanHistory.shift();
+
+  // 최근 8프레임 중 최대로 벌어졌던 폭(maxRecentGap) 대비 현재 얼마나 오므라들었는지 계산
+  let maxRecentGap = combinedGap;
+  for (let i = 0; i < openSpanHistory.length; i++) {
+    if (openSpanHistory[i] > maxRecentGap) maxRecentGap = openSpanHistory[i];
+  }
+
+  // 닫힘 정도(0.0 = 활짝 벌어짐, 1.0 = 완전히 오므라듦)
+  const closedThreshold = 0.42;
+  const openThreshold = 0.85;
+  const openness = Math.max(0, Math.min(1, (combinedGap - closedThreshold) / (openThreshold - closedThreshold)));
+
+  // 실제로 벌렸다가 오므라드는 수축 변화량(delta) 또는 두 끝이 충분히 맞닿은 상태 판별
+  const contraction = maxRecentGap - combinedGap;
+  const isClosingMotion = (contraction >= 0.055 && combinedGap <= 0.62);
+  const isPinchedClosed = (combinedGap <= 0.46) || isClosingMotion;
+
+  return {
+    x: mid.x,
+    y: mid.y,
+    tipA: { x: tipA.x, y: tipA.y },
+    tipB: { x: tipB.x, y: tipB.y },
+    gapNorm: combinedGap,
+    openness,
+    contraction,
+    isClosingMotion,
+    isPinchedClosed,
+    bothEdgesFound
+  };
+}
+
 function scan(d) {
   mask.fill(0);
   if (hand) {
@@ -1101,7 +1268,6 @@ function scan(d) {
     yellow: { n: 0, x: 0, y: 0 },
     purple: { n: 0, x: 0, y: 0 }
   };
-  let wn = 0;
 
   for (let y = 2; y < FH - 2; y++) {
     const row = y * FW;
@@ -1109,12 +1275,6 @@ function scan(d) {
       const i = row + x;
       if (mask[i]) continue;
       const j = i << 2, r = d[j], g = d[j + 1], b = d[j + 2];
-      const mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
-      const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
-      if (mn >= 165 && mx - mn <= 55 && mx >= 185) {
-        wl[wn++] = i;
-        continue;
-      }
       const c = cls(r, g, b);
       if (c) {
         const s = S[c];
@@ -1125,24 +1285,7 @@ function scan(d) {
     }
   }
 
-  let tip = null;
-  if (wn >= 18 && hand) {
-    const ix = hand[8].x * FW, iy = hand[8].y * FH;
-    const wx = hand[0].x * FW, wy = hand[0].y * FH;
-    const maxR2 = (FW * 0.38) ** 2;
-    let bestScore = -1;
-    for (let k = 0; k < wn; k += 2) {
-      const idx = wl[k];
-      const x = idx % FW, y = (idx / FW) | 0;
-      const dIdx2 = (x - ix) ** 2 + (y - iy) ** 2;
-      if (dIdx2 > maxR2) continue;
-      const dWrist2 = (x - wx) ** 2 + (y - wy) ** 2;
-      if (dWrist2 > dIdx2 && dIdx2 > bestScore) {
-        bestScore = dIdx2;
-        tip = { x: x / FW, y: y / FH };
-      }
-    }
-  }
+  const tip = detectChopstickTipsAndPinch(d);
   return { S, tip };
 }
 
@@ -1236,6 +1379,7 @@ function resetRound() {
   gc = 0;
   lf = 0;
   anchor = null;
+  openSpanHistory.length = 0;
   setGauge(0, null);
 }
 
@@ -1418,7 +1562,9 @@ function update(t) {
     : null;
 
   const near = !!(tip && food && dist(tip, food) < Math.max(0.13, food.r * 4.5));
-  if (near) lastNear = t;
+  const pinched = !!(tip && tip.isPinchedClosed);
+  const grippingFood = near && pinched;
+  if (grippingFood) lastNear = t;
 
   coach(tip, t);
 
@@ -1436,7 +1582,8 @@ function update(t) {
           : { x: food.x, y: food.y };
         bf++;
       }
-      if (food && near && bf >= 1) {
+      // 젓가락 두 끝이 음식에 닿은 상태에서 실제로 오므라들어야 집기(GRIP) 진행
+      if (food && grippingFood && bf >= 1) {
         gc++;
         if (gc >= 2) {
           phase = 'GRIP';
@@ -1444,21 +1591,26 @@ function update(t) {
           gripAt = t;
           lf = 0;
           lostAt = 0;
-          say(`좋아요, ${COL[target][2]} 음식을 잘 잡았어요! 그대로 살짝만 들어 올려 보세요.`, 'grip', true);
+          say(`좋아요, 젓가락 끝을 오므려서 ${COL[target][2]} 음식을 꼭 집었어요! 그대로 살짝 들어 올려 보세요.`, 'grip', true);
         }
       } else {
         gc = Math.max(0, gc - 1);
       }
-      setGauge(
-        Math.min(100, gc * 45),
-        near ? '🥢 잘 잡았어요! 살짝 들어 올려요' : `젓가락 끝으로 ${COL[target][2]} 음식을 집어요`
-      );
+
+      let readyStatus = `젓가락 끝을 ${COL[target][2]} 음식에 대고 오므려 집어요`;
+      if (near && !pinched) {
+        readyStatus = '🤏 좋아요! 이제 위쪽 젓가락을 오므려 집으세요';
+      } else if (grippingFood) {
+        readyStatus = '🥢 꽉 집었어요! 살짝 들어 올려요';
+      }
+      const proximityBonus = (near && !pinched) ? 25 : 0;
+      setGauge(Math.min(100, proximityBonus + gc * 38), readyStatus);
     } else if (phase === 'GRIP') {
       if (!food) {
         if (!lostAt) lostAt = t;
         if (t - lostAt > 3000) {
           resetRound();
-          say('어머, 음식이 잠깐 안 보이네요. 천천히 다시 집어 볼까요?', 'retry', true);
+          say('어머, 음식이 잠깐 안 보이네요. 천천히 다시 오므려 집어 볼까요?', 'retry', true);
         }
         setGauge(50, '음식을 찾고 있어요…');
       } else {
@@ -1472,17 +1624,27 @@ function update(t) {
         const hMove = moveDist * mountCm * 0.9;
         const h = Math.max(hArea, hVert, hMove);
 
-        const isLiftedSlightly = (sc >= 1.06) || (liftY >= 0.025) || (moveDist >= 0.035 && near);
-        const stillHolding = (t - lastNear < 2200);
+        const isLiftedSlightly = (sc >= 1.06) || (liftY >= 0.025) || (moveDist >= 0.035 && grippingFood);
+        // 집은 상태를 유지(최근 1.8초 이내 오므림 유지 + 현재 크게 벌어지지 않음)해야 들어올리기 인정
+        const stillHolding = (t - lastNear < 1800) && (!tip || tip.openness < 0.72);
 
-        if (stillHolding && isLiftedSlightly) {
+        if (!stillHolding && tip && tip.openness >= 0.78) {
+          // 중간에 젓가락을 다시 활짝 벌려 놓친 경우
+          lf = Math.max(0, lf - 1);
+        } else if (stillHolding && isLiftedSlightly) {
           lf++;
         } else {
           lf = Math.max(0, lf - 1);
         }
 
         const pct = Math.min(100, Math.round(lf * 50 + Math.min(45, h * 15)));
-        setGauge(pct, isLiftedSlightly ? '✨ 살짝 들어 올렸어요! 성공 직전!' : '조금만 위로 살짝 들어 올려 보세요');
+        let gripStatus = '오므린 채로 위로 살짝 들어 올려 보세요';
+        if (tip && tip.openness >= 0.75) {
+          gripStatus = '🤏 젓가락이 벌어졌어요! 다시 꼭 오므려 주세요';
+        } else if (isLiftedSlightly) {
+          gripStatus = '✨ 오므린 채로 들어 올렸어요! 성공 직전!';
+        }
+        setGauge(pct, gripStatus);
 
         if (lf >= 2) {
           const burstPoint = tip || lastTip || food || anchor || { x: 0.5, y: 0.5 };
@@ -1491,14 +1653,25 @@ function update(t) {
       }
       if (phase === 'GRIP' && t - gripAt > 9500) {
         resetRound();
-        say('괜찮아요, 힘 빼고 다시 한 번 집어 볼까요?', 'retry', true);
+        say('괜찮아요, 힘 빼고 다시 한 번 오므려 집어 볼까요?', 'retry', true);
       }
     }
   } else {
-    setGauge(0, running ? '연습 중이에요 · 게임 시작을 눌러요!' : '준비하고 있어요');
+    const practiceHint = !running
+      ? '준비하고 있어요'
+      : (pinched ? '🤏 젓가락 끝 오므림 감지됨! · 게임 시작을 눌러요' : '젓가락 끝을 오므렸다 펴며 연습해 보세요!');
+    setGauge(0, practiceHint);
   }
 
-  return { food, tip, near };
+  return {
+    food,
+    tip,
+    tipA: tip?.tipA || null,
+    tipB: tip?.tipB || null,
+    near,
+    isClosed: pinched,
+    openRatio: tip ? tip.openness : 1
+  };
 }
 
 function renderCanvas() {
@@ -1522,14 +1695,40 @@ function renderCanvas() {
     cx.restore();
   }
 
-  if (tip) {
-    const tx = tip.x * W, ty = tip.y * H;
+  const { tipA, tipB, isClosed } = renderState;
+  if (tipA && tipB) {
+    const ax = tipA.x * W, ay = tipA.y * H;
+    const bx = tipB.x * W, by = tipB.y * H;
+    const mx = (ax + bx) * 0.5, my = (ay + by) * 0.5;
     cx.save();
-    cx.fillStyle = near ? '#38d9a9' : '#ffffff';
+
+    // 두 젓가락 끝 사이의 벌어짐(집게 간격) 연결선
+    cx.strokeStyle = isClosed ? '#38d9a9' : '#ffd43b';
+    cx.lineWidth = isClosed ? 5 : 3;
+    cx.setLineDash(isClosed ? [] : [4, 3]);
+    cx.beginPath();
+    cx.moveTo(ax, ay);
+    cx.lineTo(bx, by);
+    cx.stroke();
+    cx.setLineDash([]);
+
+    // 위쪽/아래쪽 젓가락 각각의 끝점 표시
+    for (const [px, py] of [[ax, ay], [bx, by]]) {
+      cx.fillStyle = isClosed ? '#20c997' : '#ffffff';
+      cx.strokeStyle = '#25304c';
+      cx.lineWidth = 2.5;
+      cx.beginPath();
+      cx.arc(px, py, 6.5, 0, Math.PI * 2);
+      cx.fill();
+      cx.stroke();
+    }
+
+    // 오므림(집기) 중심 포인터 표시
+    cx.fillStyle = (near && isClosed) ? '#38d9a9' : (isClosed ? '#63e6be' : '#ffd43b');
     cx.strokeStyle = '#25304c';
     cx.lineWidth = 3;
     cx.beginPath();
-    cx.arc(tx, ty, near ? 12 : 9, 0, Math.PI * 2);
+    cx.arc(mx, my, (near && isClosed) ? 12 : 8, 0, Math.PI * 2);
     cx.fill();
     cx.stroke();
     cx.restore();
