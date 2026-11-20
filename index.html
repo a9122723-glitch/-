@@ -2,9 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#72c6ff">
-<title>🐰 콕콕 젓가락 대모험 v1.6</title>
+<title>🐰 콕콕 젓가락 대모험 v1.7</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -26,8 +26,17 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+}
+
+body {
   min-height: 100vh;
   background:
     radial-gradient(circle at 8% 12%, rgba(255,255,255,0.9) 0 42px, transparent 44px),
@@ -35,21 +44,24 @@ body {
     radial-gradient(circle at 88% 16%, rgba(255,255,255,0.85) 0 48px, transparent 50px),
     radial-gradient(circle at 93% 14%, rgba(255,255,255,0.85) 0 30px, transparent 32px),
     linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bot) 78%, #b2f2bb 78%, #8ce99a 100%);
-  overflow: hidden;
+  overflow-y: hidden;
 }
 
 button, select, input { font: inherit; color: var(--ink); }
 
 .app {
+  width: 100%;
+  max-width: 100%;
   height: 100vh;
   height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(265px, 29vw, 355px);
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
   padding: 12px;
   padding-top: max(12px, env(safe-area-inset-top));
   padding-bottom: max(12px, env(safe-area-inset-bottom));
+  overflow-x: hidden;
 }
 
 header {
@@ -122,7 +134,9 @@ h1 {
 .cam {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   width: 100%;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,14 +146,17 @@ h1 {
   box-shadow: 0 7px 0 var(--ink);
   overflow: hidden;
   position: relative;
+  touch-action: pan-y;
 }
 
 #stage {
-  position: relative;
+  position: absolute;
+  inset: 0;
   background: #14213d;
   overflow: hidden;
   width: 100%;
   height: 100%;
+  touch-action: pan-y;
 }
 
 #stage video, #stage canvas {
@@ -545,37 +562,76 @@ li.ok {
 #log { font-size: 11px; max-height: 85px; overflow: auto; margin-top: 6px; background: #f1f3f5; padding: 6px; border-radius: 8px; }
 
 @media (orientation: portrait) {
-  body { overflow: auto; }
-  .app {
+  body, body.mode-portrait {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .app, body.mode-portrait .app {
+    width: 100%;
+    max-width: 100vw;
     height: auto;
     min-height: 100dvh;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
     padding-bottom: 40px;
   }
   header {
     justify-content: space-between;
     padding: 8px 12px;
     gap: 8px;
+    min-width: 0;
   }
   h1 {
     font-size: clamp(17px, 4.5vw, 22px);
     flex: 0 1 auto;
   }
-  .cam {
+  .play {
     width: 100%;
-    height: 62vh;
-    min-height: 340px;
-    max-height: 560px;
+    min-width: 0;
+  }
+  .cam, body.mode-portrait .cam {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 4 / 3;
+    height: auto;
+    min-height: 270px;
+    max-height: 52dvh;
     flex: none;
   }
-  aside { overflow: visible; }
+  aside {
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+}
+
+@media (orientation: landscape) {
+  body, body.mode-landscape {
+    overflow: hidden;
+  }
+  .app, body.mode-landscape .app {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    grid-template-columns: minmax(0, 1fr) clamp(265px, 29vw, 355px);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .cam, body.mode-landscape .cam {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    min-height: 0;
+    max-height: none;
+    flex: 1;
+  }
 }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.6</span></h1>
+    <h1>🐰 콕콕 젓가락 대모험 <span class="badge-ver">v1.7</span></h1>
     <div class="header-chips">
       <span class="chip">⭐ <span id="score">0</span>점</span>
       <span class="chip timer" id="tchip">⏱ <span id="time">01:00</span></span>
@@ -947,10 +1003,21 @@ $('closeGuide').onclick = () => {
   $('guideModal').classList.remove('show');
 };
 
+function applyOrientationMode() {
+  const vw = document.documentElement.clientWidth || window.innerWidth;
+  const vh = document.documentElement.clientHeight || window.innerHeight;
+  const isPortrait = window.matchMedia('(orientation: portrait)').matches || vh > vw;
+  document.body.classList.toggle('mode-portrait', isPortrait);
+  document.body.classList.toggle('mode-landscape', !isPortrait);
+  if (window.scrollX !== 0) {
+    window.scrollTo(0, window.scrollY);
+  }
+}
+
 function sizeStage() {
-  const r = camBox.getBoundingClientRect();
-  stage.style.width = Math.max(1, r.width) + 'px';
-  stage.style.height = Math.max(1, r.height) + 'px';
+  applyOrientationMode();
+  stage.style.width = '100%';
+  stage.style.height = '100%';
 }
 
 function setup() {
@@ -973,7 +1040,11 @@ function setup() {
 
 video.addEventListener('resize', () => { if (running) setup(); });
 window.addEventListener('resize', sizeStage);
-window.addEventListener('orientationchange', () => setTimeout(sizeStage, 300));
+window.addEventListener('orientationchange', () => setTimeout(sizeStage, 250));
+window.matchMedia('(orientation: portrait)').addEventListener('change', sizeStage);
+window.addEventListener('scroll', () => {
+  if (window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+}, { passive: true });
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
@@ -1563,7 +1634,7 @@ function finish() {
   $('stars').textContent = '⭐'.repeat(wins ? st : 0) + '☆'.repeat(5 - (wins ? st : 0));
   $('res').textContent = '성공 ' + wins + '번 · 총 ' + score + '점!';
   $('end').classList.add('show');
-  say(`우와, 시간이 다 되었어요! 오늘 모두 ${wins}번 성공해서 총 ${score}점을 획득했어요! 정말 대단해요!`, 'end', true);
+  say(`아쉽게도 시간이 다 되었어요! 오늘 모두 ${wins}번 성공해서 총 ${score}점을 획득했어요! 정말 대단해요!`, 'end', true);
 }
 
 $('play').onclick = begin;
